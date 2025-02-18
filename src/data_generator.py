@@ -3,6 +3,7 @@
 
 # imports
 import numpy as np
+from typing import Tuple
 
 modulation_types = [
     "BPSK",
@@ -18,36 +19,56 @@ sps_rates = [
     16,
 ]
 
-# TODO: Look into noise levels.
+# TODO: Look into noise levels. Current values are arbitrary.
 noise_levels = [
+    0.01,
+    0.1,
+    0.5,
+    1.0,
 ]
 
-# TODO: Explore range of bitstream lengths.
-def generate_bitstream() -> np.ndarray:
+def generate_bitstream(num_bits: int=None) -> np.ndarray:
     """
     Generate a random bitstream of given length.
     """
-    num_bits = np.random.uniform(100, 10000)
+    if num_bits is None:
+        num_bits = np.random.uniform(100, 10000)
+        num_bits = int(num_bits)
+    
     return np.random.randint(0, 2, num_bits)
 
 # TODO: Implement modulation schemes.
-def apply_modulation(bitstream: np.ndarray) -> np.ndarray, str:
+def apply_modulation(bitstream: np.ndarray, modulation_type: str=None) -> Tuple[np.ndarray, str]:
     """
     Apply modulation to the bitstream.
     """
-    modulation_type = np.random.choice(modulation_types)
+    if modulation_type is None:
+        modulation_type = np.random.choice(modulation_types)
 
     if modulation_type == "BPSK":
+        modulated_signal = 2 * bitstream - 1
+    
+    # TODO: Implement QPSK
     elif modulation_type == "QPSK":
+        modulated_signal = 2 * bitstream - 1
+
+    # TODO: Implement 8PSK
     elif modulation_type == "8PSK":
+        modulated_signal = 2 * bitstream - 1
+
+    # TODO: Implement 16QAM
     elif modulation_type == "16QAM":
+        modulated_signal = 2 * bitstream - 1
+
     return modulated_signal, modulation_type
 
-def upsample_signal(signal: np.ndarray) -> np.ndarray, int:
+def upsample_signal(signal: np.ndarray, sps: int=None) -> Tuple[np.ndarray, int]:
     """
     Upsample the signal based on the selected SPS rate.
     """
-    sps = np.random.choice(sps_rates)
+    if sps is None:
+        sps = np.random.choice(sps_rates)
+        
     upsampled_signal = np.repeat(signal, sps)
     return upsampled_signal, sps
 
@@ -64,10 +85,15 @@ def generate_fir_filter_taps() -> np.ndarray:
     return filter_taps
    
 # TODO: Implement noise addition.
-def apply_noise(signal: np.ndarray) -> np.ndarray, float:
+def apply_noise(signal: np.ndarray, noise_level: float=None) -> Tuple[np.ndarray, float]:
     """
     Apply noise to the signal.
     """
+    if noise_level is None:
+        noise_level = np.random.choice(noise_levels)
+
+    noise = np.random.normal(0, noise_level, signal.shape)
+    noisy_signal = signal + noise
     return noisy_signal, noise_level
 
 # TODO: Implement normalization.
@@ -75,7 +101,7 @@ def normalize_signal(signal: np.ndarray) -> np.ndarray:
     """
     Normalize the signal.
     """
-    return []
+    return signal / np.max(np.abs(signal))
 
 # TODO: Implement data generation function.
 # TODO: Implement HDF5 file generation and storage.
