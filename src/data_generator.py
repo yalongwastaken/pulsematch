@@ -3,8 +3,10 @@
 
 # imports
 import numpy as np
+import scipy.signal as signal
 from typing import Tuple
 
+# Modulation
 modulation_types = [
     "BPSK",
     "QPSK",
@@ -12,6 +14,7 @@ modulation_types = [
     "16QAM",
 ]
 
+# Samples per symbol (SPS)
 sps_rates = [
     2,
     4,
@@ -68,7 +71,7 @@ def upsample_signal(signal: np.ndarray, sps: int=None) -> Tuple[np.ndarray, int]
     """
     if sps is None:
         sps = np.random.choice(sps_rates)
-        
+
     upsampled_signal = np.repeat(signal, sps)
     return upsampled_signal, sps
 
@@ -83,8 +86,17 @@ def generate_fir_filter_taps() -> np.ndarray:
     # Generate random FIR filter taps
     filter_taps = np.random.uniform(-10, 10, num_taps)
     return filter_taps
+
+def apply_fir_filter(signal: np.ndarray, filter_taps: np.ndarray=None) -> np.ndarray:
+    """
+    Apply FIR filter to the signal.
+    """
+    if filter_taps is None:
+        filter_taps = generate_fir_filter_taps()
+
+    filtered_signal = signal.lfilter(filter_taps, 1.0, signal)
+    return filtered_signal, filter_taps
    
-# TODO: Implement noise addition.
 def apply_noise(signal: np.ndarray, noise_level: float=None) -> Tuple[np.ndarray, float]:
     """
     Apply noise to the signal.
@@ -96,7 +108,6 @@ def apply_noise(signal: np.ndarray, noise_level: float=None) -> Tuple[np.ndarray
     noisy_signal = signal + noise
     return noisy_signal, noise_level
 
-# TODO: Implement normalization.
 def normalize_signal(signal: np.ndarray) -> np.ndarray:
     """
     Normalize the signal.
@@ -118,18 +129,11 @@ def generate_data(dataset_size: int=100000) -> None:
     # Upsample the signal
     upsampled_signal, sps_rate = upsample_signal(modulated_signal)
 
-    # Generate FIR filter taps
-    filter_taps = generate_fir_filter_taps()
-
-    # Apply FIR filter to the signal
-    # TODO: Implement FIR filtering
+    # Apply the pulse shaping filter
+    filtered_signal, filter_taps = apply_fir_filter(upsampled_signal)
 
     # Apply noise
-    noisy_signal, noise_level = apply_noise(upsampled_signal)
+    noisy_signal, noise_level = apply_noise(filtered_signal)
 
     # Normalize the signal
     normalized_signal = normalize_signal(noisy_signal)
-
-if __name__ == "__main__":
-    filter_taps = generate_fir_filter_taps()
-    print("Filter taps:", filter_taps)
