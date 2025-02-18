@@ -1,1 +1,0 @@
-# TODO: Create a class or script that synthesizes the data for this project.
