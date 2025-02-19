@@ -1,6 +1,8 @@
 # Author: Anthony Yalong
 # Description: This file generates the data for PulseMatch.
 
+# NOTE: Looking to generate a dataset with approximately 1 million samples.
+
 # TODO: Add reasoning behind the data generation process.
 #   1. Source for why the bitstream range is between 100 and 10000.
 #   2. Source for why the modulation types are BPSK, QPSK, 8PSK, and 16QAM.
