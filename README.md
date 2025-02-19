@@ -2,11 +2,11 @@
 
 ## Description
 
-PulseMatch is a deep learning-based approach for optimizing matched filters in digital communication systems. The project focuses on learning FIR filter taps for a matched filter that correlates with a given pulse shaping waveform, with the objective of maximizing the signal-to-noise ratio (SNR). By leveraging deep neural networks or reinforcement learning, PulseMatch aims to determine the optimal filter taps for any unknown, pulse-shaped signal based on received signal data, enhancing detection accuracy and overall system performance in varying channel conditions.
+PulseMatch is a deep learning-based approach for optimizing matched filters in digital communication systems. The project focuses on learning FIR filter taps for a matched filter that correlates with a given pulse shaping waveform, with the objective of maximizing the signal-to-noise ratio (SNR). By leveraging CNNs, LSTMs, and Transformers, PulseMatch aims to determine the optimal filter taps for any unknown, pulse-shaped signal based on received signal data, enhancing detection accuracy and overall system performance in varying channel conditions.
 
 ## Data
 
-The dataset used for training and evaluation is entirely synthesized, primarily due to the lack of openly available signal data that aligns with the niche goals of this project. The synthetic data encompasses diverse pulse shaping waveforms (defined by FIR filter taps), various modulation schemes, a wide range of signal frequencies, and realistic channel noise models. This approach ensures flexibility in training and testing while aiming to create a model that generalizes well across various digital communication scenarios.
+The dataset used for training and evaluation is entirely synthesized, primarily due to the lack of openly available signal data that aligns with the niche goals of this project. The synthetic data encompasses diverse pulse shaping waveforms (defined by FIR filter taps), various modulation schemes, different sample-per-symbol (SPS) rates, and realistic channel noise models. This approach ensures flexibility in training and testing while aiming to create a model that generalizes well across various digital communication scenarios.
 
 ## About
 
