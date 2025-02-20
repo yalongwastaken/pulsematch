@@ -1,0 +1,17 @@
+Workflow: 
+    1. 
+    Generate and train based on basic configurations like a known modulation scheme (e.g., BPSK), 
+    a fixed upsampling rate (e.g., 2 SPS), and a random FIR filter with no noise. This will be the 
+    baseline for comparison and analysis.
+        Random bitstream, BPSK, 2 SPS, random FIR filter, no noise.
+        Random bitstream, 8PSK, 4 SPS, random FIR filter, low noise.
+
+    2. 
+    Increase complexity incrementally by introducing randomness in a signel parameter.
+        Random bitstream, 8PSK, random SPS, random FIR filter, low noise. 
+        Random bitstream, random modulation, 4 SPS, random FIR filter, low noise.
+        Random bitstream, 8PSK, 4 SPS, random FIR filter, random noise.
+
+    3. 
+    Total randomness:
+        Random bitstream, random modulation, random SPS, random FIR filter, random noise level.
