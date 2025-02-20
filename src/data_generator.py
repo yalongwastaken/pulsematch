@@ -1,7 +1,9 @@
 # Author: Anthony Yalong
 # Description: This file generates the data for PulseMatch.
 
-# NOTE: Looking to generate a dataset with approximately 1 million samples.
+# TODO: Add function to determine the raw signal power.
+
+# TODO: Contrain SPS to modulation type.
 
 # TODO: Add reasoning behind the data generation process.
 #   1. Source for why the bitstream range is between 100 and 10000.
@@ -12,6 +14,10 @@
 #   6. Source for why the upsampling rates are between 2 and 16.
 #   7. Source for why the dataset size is between 100000 and 1000000.
 
+# TODO: Potential improvements:
+#   1. Add more modulation types (e.g., 32QAM, 64QAM, 2-FSK, 4-FSK).
+#   3. Add symmetric option for FIR filter tap generation.
+
 # imports
 import numpy as np
 import scipy.signal
@@ -19,44 +25,60 @@ import matplotlib.pyplot as plt
 
 from typing import Tuple
 
+# Constants
+DATASET_SIZE = 1000000
+
 # Modulation
 modulation_types = [
     "BPSK",
     "QPSK",
     "8PSK",
     "16QAM",
+    # "32QAM",
+    # "64QAM",
+    # "2-FSK",
+    # "4-FSK",
 ]
 
 # Samples per symbol (SPS)
 sps_rates = [
     2,
+    3,
     4,
     8,
     16,
+    32,
+    64,
 ]
 
-# TODO: Look into noise levels. Current values are arbitrary.
+# Known FIR filter taps
+known_filters = [
+    "RRC",
+    "RC",
+    "Gaussian",
+    "Sinc",
+]
+
 noise_levels = [
+    0,
+    0.001,
     0.01,
     0.1,
+    0.2,
     0.5,
     1.0,
 ]
 
 def generate_bitstream(num_bits: int=None) -> np.ndarray:
-    """
-    Generate a random bitstream of given length.
-    """
+    """Generate a random bitstream of given length."""
     if num_bits is None:
-        num_bits = np.random.uniform(100, 10000)
+        num_bits = np.random.uniform(1024, 65536)
         num_bits = int(num_bits)
     
     return np.random.randint(0, 2, num_bits)
 
 def apply_modulation(bitstream: np.ndarray, modulation_type: str=None) -> Tuple[np.ndarray, str]:
-    """
-    Apply modulation to the bitstream.
-    """
+    """Apply modulation to the bitstream."""
     if modulation_type is None:
         modulation_type = np.random.choice(modulation_types)
 
@@ -133,7 +155,6 @@ def apply_modulation(bitstream: np.ndarray, modulation_type: str=None) -> Tuple[
             elif np.array_equal(triplet, [1, 1, 1]):
                 modulated_signal[_, :] = [+1, 0]
 
-    # TODO: Implement 16QAM
     elif modulation_type == "16QAM":
         # 16QAM mapping IQ:
         #   0000 -> [-3,-3]
@@ -196,12 +217,26 @@ def apply_modulation(bitstream: np.ndarray, modulation_type: str=None) -> Tuple[
             elif np.array_equal(quadruplet,[1 ,1 ,1 ,1 ]):
                 modulated_signal[_, :] = [+3,+3]
 
+    # TODO: Implement 32QAM
+    elif modulation_type == "32QAM":
+        pass
+
+    # TODO: Implement 64QAM
+    elif modulation_type == "64QAM":
+        pass
+
+    # TODO: Implement 2-FSK
+    elif modulation_type == "2-FSK":
+        pass
+
+    # TODO: Implement 4-FSK
+    elif modulation_type == "4-FSK":
+        pass
+
     return modulated_signal, modulation_type
 
 def upsample_signal(signal: np.ndarray, sps: int=None) -> Tuple[np.ndarray, int]:
-    """
-    Upsample the signal based on the selected SPS rate.
-    """
+    """Upsample the signal based on the selected SPS rate."""
     if sps is None:
         sps = np.random.choice(sps_rates)
 
@@ -210,20 +245,28 @@ def upsample_signal(signal: np.ndarray, sps: int=None) -> Tuple[np.ndarray, int]
 
 # TODO: Add RRC and RC filter taps generation.
 def generate_fir_filter_taps() -> np.ndarray:
-    """
-    Generate FIR filter taps arbitrarily for pulse shaping.
-    """
+    """Generate FIR filter taps arbitrarily for pulse shaping."""
     num_taps = int(np.random.normal(64, 32))
     num_taps = np.clip(num_taps, 4, 513)
+
+    # Randomly generate commonly used FIR filter taps
+    if np.random.rand() < 0.20:
+        known_filter = np.random.choice(known_filters)
+        if known_filter == "RRC":
+            pass
+        elif known_filter == "RC":
+            pass
+        elif known_filter == "Gaussian":
+            pass
+        elif known_filter == "Sinc":
+            pass
 
     # Generate random FIR filter taps
     filter_taps = np.random.uniform(-1, 1, num_taps)
     return filter_taps
 
 def apply_fir_filter(signal: np.ndarray, filter_taps: np.ndarray=None) -> np.ndarray:
-    """
-    Apply FIR filter to the signal.
-    """
+    """Apply FIR filter to the signal."""
     if filter_taps is None:
         filter_taps = generate_fir_filter_taps()
 
@@ -235,9 +278,7 @@ def apply_fir_filter(signal: np.ndarray, filter_taps: np.ndarray=None) -> np.nda
     return filtered_signal, filter_taps
    
 def apply_noise(signal: np.ndarray, noise_level: float=None) -> Tuple[np.ndarray, float]:
-    """
-    Apply noise to the signal.
-    """
+    """Apply noise to the signal."""
     if noise_level is None:
         noise_level = np.random.choice(noise_levels)
 
@@ -246,16 +287,12 @@ def apply_noise(signal: np.ndarray, noise_level: float=None) -> Tuple[np.ndarray
     return noisy_signal, noise_level
 
 def normalize_signal(signal: np.ndarray) -> np.ndarray:
-    """
-    Normalize the signal.
-    """
+    """Normalize the signal."""
     return signal / np.max(np.abs(signal))
 
 # TODO: Implement HDF5 file generation and storage.
-def generate_data(dataset_size: int=100000, plot=False, store=False) -> None:
-    """
-    Generate the data for PulseMatch.
-    """
+def generate_data(dataset_size: int=DATASET_SIZE, plot=False, store=False) -> None:
+    """Generate the data for PulseMatch."""
     for _ in range(dataset_size):
         # Generate a random bitstream
         bitstream = generate_bitstream()
