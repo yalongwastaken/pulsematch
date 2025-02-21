@@ -1,17 +1,14 @@
 # Author: Anthony Yalong
 # Description: This file generates the data for PulseMatch.
 
-# TODO: Add function to determine the raw signal power.
-
-# TODO: Potential improvements:
-#   1. Add more modulation types (e.g., 32QAM, 64QAM, 2-FSK, 4-FSK).
-
 # Imports
 import modulation
 import numpy as np
 import scipy.signal
 import matplotlib.pyplot as plt
 from typing import Tuple
+
+# TODO: Update the addition of noise to be theoretically correct.
 
 DATASET_SIZE = 1000000
 
@@ -37,10 +34,8 @@ modulation_types = [
     "QPSK",
     "8PSK",
     "16QAM",
-    # "32QAM",
-    # "64QAM",
-    # "2-FSK",
-    # "4-FSK",
+    "32QAM",
+    "64QAM",
 ]
 
 # NOTE: UPSAMPLING SOURCES:
@@ -99,24 +94,17 @@ def apply_modulation(bitstream: np.ndarray, modulation_type: str=None) -> Tuple[
     elif modulation_type == "8PSK":
         modulated_signal = modulation.modulate_8psk(bitstream)
         
+    # 16QAM modulation
     elif modulation_type == "16QAM":
         modulated_signal = modulation.modulate_16qam(bitstream)
 
-    # TODO: Implement 32QAM
+    # 32QAM modulation
     elif modulation_type == "32QAM":
         modulated_signal = modulation.modulate_32qam(bitstream)
 
-    # TODO: Implement 64QAM
+    # 64QAM modulation
     elif modulation_type == "64QAM":
         modulated_signal = modulation.modulate_64qam(bitstream)
-
-    # TODO: Implement 2-FSK
-    elif modulation_type == "2-FSK":
-        modulated_signal = modulation.modulate_2fsk(bitstream)
-
-    # TODO: Implement 4-FSK
-    elif modulation_type == "4-FSK":
-        modulated_signal = modulation.modulate_4fsk(bitstream)
 
     return modulated_signal, modulation_type
 
@@ -174,10 +162,6 @@ def apply_noise(signal: np.ndarray, noise_level: float=None) -> Tuple[np.ndarray
     noisy_signal = signal + noise
     return noisy_signal, noise_level
 
-def normalize_signal(signal: np.ndarray) -> np.ndarray:
-    """Normalize the signal."""
-    return signal / np.max(np.abs(signal))
-
 # TODO: Implement HDF5 file generation and storage.
 def generate_data(dataset_size: int=DATASET_SIZE, plot=False, store=False) -> None:
     """Generate the data for PulseMatch."""
@@ -195,27 +179,30 @@ def generate_data(dataset_size: int=DATASET_SIZE, plot=False, store=False) -> No
         filtered_signal, filter_taps = apply_fir_filter(upsampled_signal)
 
         # Apply noise
-        noisy_signal, noise_level = apply_noise(filtered_signal)
-
-        # Normalize the signal
-        normalized_signal = normalize_signal(noisy_signal)
+        generated_signal, noise_level = apply_noise(filtered_signal)
 
         if plot:
             # Plot I and Q components and FIR filter taps
             plt.figure(figsize=(10, 6))
 
+            """ 
             plt.subplot(4, 1, 1)
-            plt.plot(bitstream, label='Bitstream')
-            plt.title('Bitstream')
+            plt.plot(filtered_signal, label='Pre-noise Signal')
+            plt.title('Pre-noise Signal')
+            plt.grid(True)
+            """
+            plt.subplot(4, 1, 1)
+            plt.plot(upsampled_signal, label='Pre-Filtered Signal')
+            plt.title('Pre-Filtered Signal')
             plt.grid(True)
 
             plt.subplot(4, 1, 2)
-            plt.plot(normalized_signal[:, 0], label='I Component')
+            plt.plot(generated_signal[:, 0], label='I Component')
             plt.title('I Component')
             plt.grid(True)
 
             plt.subplot(4, 1, 3)
-            plt.plot(normalized_signal[:, 1], label='Q Component', color='orange')
+            plt.plot(generated_signal[:, 1], label='Q Component', color='orange')
             plt.title('Q Component')
             plt.grid(True)
 
