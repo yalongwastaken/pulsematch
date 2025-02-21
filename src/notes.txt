@@ -15,3 +15,13 @@ Workflow:
     3. 
     Total randomness:
         Random bitstream, random modulation, random SPS, random FIR filter, random noise level.
+
+
+Loss Function: 
+    L = (lambda) * (Loss Power Ratio) + (1 - lambda) * (Loss MSE)
+        : Loss Power Ratio : 
+            1. Ideal Signal Power = Power(Actual FIR Filter Taps * Noisy Input Signal)
+            2. Predicted Signal Power = Power(Predicted FIR Filter Taps * Noisy Input Signal)
+            3. Loss Power Ratio = | (Ideal Signal Power)/(Predicted Signal Power) - 1| ** 2
+        : Loss Mean Squared Error :
+            1. Loss MSE = (Actual FIR Filter Taps - Predicted Filter Taps) ** 2 / # of Taps
