@@ -1,14 +1,16 @@
 # Author: Anthony Yalong
 # Description: This file generates the data for PulseMatch.
 
+# TODO: Add windowing function to the generated FIR filter taps to make it mimic practical pulse shaping filters.
+# TODO: Add symbol rates to the generated FIR filter taps to make it mimic practical pulse shaping filters.
+# TODO: Add normalization to the generated FIR filter taps to make it mimic practical pulse shaping filters.
+
 # Imports
 import modulation
 import numpy as np
 import scipy.signal
 import matplotlib.pyplot as plt
 from typing import Tuple
-
-# TODO: Update the addition of noise to be theoretically correct.
 
 DATASET_SIZE = 1000000
 
