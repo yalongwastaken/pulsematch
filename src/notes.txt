@@ -1,20 +1,25 @@
 Workflow: 
     1. 
     Generate and train based on basic configurations like a known modulation scheme (e.g., BPSK), 
-    a fixed upsampling rate (e.g., 2 SPS), and a random FIR filter with no noise. This will be the 
-    baseline for comparison and analysis.
-        Random bitstream, BPSK, 2 SPS, random FIR filter, no noise.
-        Random bitstream, 8PSK, 4 SPS, random FIR filter, low noise.
+    a fixed upsampling rate (e.g. 2 SPS), a known windowing function, and a random FIR filter with no noise. 
+    This will be the baseline for comparison and analysis. Additionally, depending on the results, if they
+    are poor, see if a model can learn on e FIR filter function like RRC.
+        Random bitstream, BPSK, 2 SPS, hamming window, random FIR filter, no noise.
+        Random bitstream, 8PSK, 4 SPS, hamming window, random FIR filter, low noise.
+
+        Depending:
+            Random bitstream, 8PSK, 4 SPS, hamming window, random RRC configuration, low noise.
 
     2. 
     Increase complexity incrementally by introducing randomness in a signel parameter.
-        Random bitstream, 8PSK, random SPS, random FIR filter, low noise. 
-        Random bitstream, random modulation, 4 SPS, random FIR filter, low noise.
-        Random bitstream, 8PSK, 4 SPS, random FIR filter, random noise.
+        Random bitstream, 8PSK, random SPS, hamming window, random FIR filter, low noise. 
+        Random bitstream, random modulation, 4 SPS, hamind window, random FIR filter, low noise.
+        Random bitstream, 8PSK, 4 SPS, random window, random FIR filter, low noise.
+        Random bitstream, 8PSK, 4 SPS, hamming window, random FIR filter, random noise,
 
     3. 
     Total randomness:
-        Random bitstream, random modulation, random SPS, random FIR filter, random noise level.
+        Random bitstream, random modulation, random SPS, random window, random FIR filter, random noise level.
 
 
 Loss Function: 
