@@ -16,33 +16,39 @@
 #    QAM schemes. These modulations are representative of real-world digital communication systems that map bits to symbols in the 
 #    complex plane.
 #
-# 3. Upsampling: The modulated signal is upsampled by a factor of SPS (samples per symbol), which simulates the discretization 
-#    process of real-world signals. The upsampling process repeats each symbol over multiple samples, which corresponds to the 
-#    concept of increasing the sampling rate to capture more precise information about each symbol. This process is relatively
-#    simple. To potentially improve the upsampling process, interpolation methods (e.g., linear, cubic) could be used to create 
-#    to more accurately mimic real-world signals.
+# 3. Pulse Shaping: The modulated signal is upsampled and passed through a pulse shaping filter (FIR filter). The filter is either a known
+#    filter (e.g., RRC, RC, Gaussian, Sinc) or a randomly generated filter. The purpose of pulse shaping is to control the bandwidth
+#    of the transmitted signal and reduce inter-symbol interference (ISI). The generation of the filters follows two approaches, which 
+#    align to the theoretical background of digital communication systems:
 #
-# 4. Pulse Shaping: A finite impulse response (FIR) filter is applied to the upsampled signal to introduce pulse shaping. The 
-#    FIR filter generation is done arbitrarily, with the random creation of completely random taps and potentially known pulse 
-#    shaping filters (e.g., RRC, RC, Gaussian, Sinc). The logic behind FIR Filter generation is as follows:
+#    - Known Filters: The known filters used to synthesize data are Root Raised Cosine (RRC), Raised Cosine (RC), Gaussian, and Sinc filters.
+#      These filters are defined be randomly selecting a bitrate, sampling rate, and roll-of factor, which are used to calculate and determine the
+#      filter and its requirements. The filter taps are generated using commpy and normalized to have unit energy, mimicking practical pulse shaping filters.
+#      Randomly Generated: Bitrate, Sampling Rate, and Roll-off Factor
+#      1. Bitrate: The bitrate is randomly selected from a set of common bitrates (1 kbps to 5 Gbps) to represent different data rates.
+#      2. Sampling Rate: The sampling rate is randomly selected from a set of multipliers (2, 4, 8, 16) to represent different oversampling rates.
+#      3. Roll-off Factor: The roll-off factor is randomly selected from a range of (0, 1) to represent different filter shapes.
+#      # Calculated Requirements: number of taps, symbol rate, symbol period, and roll-off factor.
+#      Symbol Rate: The symbol rate is calculated by dividing the bitrate by the modulation type.
+#      Symbol Period: The symbol period is determined by taking the reciprocal of the symbol rate.
+#      Number of Taps: The number of taps is calculated based on applying a random integer multiple (4, 10) to the SPS. (SPS = symbol rate * symbol period).
+#      Roll-off Factor: See above.
 #
-#    - The number of taps for the FIR filter is an integer multiple of the samples per symbol (SPS) to align with the symbol period.
-#    - Randomly, either a known filter (e.g., RRC, RC, Gaussian, Sinc) is selected or a completely random FIR filter is generated to 
-#      balance the dataset between known and unknown filters.
-#    - Random windowing functions (e.g., Hamming, Hanning, etc.) are applied to the generated taps to simulate practical filter 
-#      characteristics. Windowing smooths the filter’s impulse response, reducing side lobes and controlling spectral leakage.
-#    - Finally, normalization is applied to the filter taps to ensure that the filter has a unit energy, making it similar to 
-#      real-world pulse shaping filters, which ensures proper signal power and avoids distortion.
+#    - Randomly Generated: The random filter generation process involves generating a random number of taps based a multiple (4, 10) of the SPS. Next, based
+#      on the number of taps, the filter taps are generated using a uniform distribution between -1 and 1. Following this, a random windowing function (Hamming, Hanning,
+#      Blackman, Bartlett) is applied to the filter taps, mimicking the windowing process used in practical FIR filter design. Finally, the filter taps are normalized to have unit energy.
 #
-# 5. Noise Application: Noise, modeled as additive white Gaussian noise (AWGN), is introduced to simulate real-world channel impairments. 
+# 4. Noise Application: Noise, modeled as additive white Gaussian noise (AWGN), is introduced to simulate real-world channel impairments. 
 #    The noise level can be adjusted to represent different signal-to-noise ratios (SNRs). The addition of AWGN, similary to the sps process
 #    is relatively simple. To potentially improve the noise application process, more complex noise models (e.g., Rayleigh, Rician)
 #
 # Notes:
 # - Time: 
-#   - The code does not explicitly incorporate a time axis. Instead, the data is represented purely in 
-#     IQ format, with each symbol mapped to a set number of samples (SPS). This reflects the typical signal representation in digital 
-#     communication systems, where signals are sampled at discrete time intervals without a direct time reference.
+#   - The code does not explicitly incorporate a time axis. Instead, the data is represented purely in IQ format. For the known filters, the time axis
+#    is implicitly represented through the filter taps, which are generated based on predefined bitrates and sampling. For the randomly generated filters,
+#    the time axis is represented through the number of taps, which are calculated based on predefined SPS rates. Overall, the time axis is not explicitly
+#    included in the implementation, as the focus is on generating synthetic data for training a model to learn pulse shaping functions. Note, there is 
+#    this discrepency between teh two approaches, as the known filters' requirements for generation are different/more dependent on known system parameters.
 #   
 # - IQ Representation: 
 #   - The IQ format is a standard in digital communications where the signal is represented by two orthogonal 
@@ -53,7 +59,7 @@
 #   - In theory, digital communication systems rely on a combination of modulation schemes, pulse shaping, and noise modeling 
 #     to encode and transmit information efficiently and accurately. This code attempts to accurately reflect that pipeline
 #     Through the previously mentioned process. While the time axis is not explicitly included in the implementation, this 
-#     concern is addressed, as the symbol rate and sampling rates are implicitly accounted for.
+#     concern is addressed, as the filters are generated with the time axis in mind (See above).
 #
 # - Limitations: 
 #   - While this approach mimics the key theoretical components of digital communication, the absence 
@@ -70,10 +76,9 @@
 #   QAM modulation/background: https://eureka.patsnap.com/blog/what-is-qam/ 
 #   Upsampling background: https://www.ni.com/docs/en-US/bundle/rfmx-demod/page/samples-per-symbol.html?srsltid=AfmBOorsVA4-lHHO6izwS6Y4FIlAevAkJU2SLIKva6LmogLAY7yzl2wZ
 #   FIR filter background: https://thesai.org/Downloads/Volume2No3/Paper%2012-%20Pulse%20Shape%20Filtering%20in%20Wireless%20Communication-A%20Critical%20Analysis.pdf
-#   Windowing function background: TODO
+#   Windowing function background: https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://library.oapen.org/bitstream/20.500.12657/41686/1/9781466515840.pdf&ved=2ahUKEwiG7ZyivN-LAxXwFVkFHUEmAYAQFnoECCoQAQ&usg=AOvVaw1fb9PgMOw9l5kNdrzzhSNF 
 #   AWGN noise/background: https://wirelesspi.com/additive-white-gaussian-noise-awgn/
 
-# TODO: Add RRC and RC filter taps generation.
 # TODO: Implement HDF5 file generation and storage.
 # TODO: Clean code.
 
@@ -169,8 +174,31 @@ def apply_modulation(bitstream: np.ndarray, modulation_type: str=None) -> Tuple[
 
     return modulated_signal, modulation_type
 
-def generate_fir_filter_taps(sps: int) -> np.ndarray:
-    """Generate FIR filter taps arbitrarily for pulse shaping."""
+def generate_known_filter(modulation_type: str) -> np.ndarray:
+    """Generate a known FIR filter (RRC, RC, etc.)."""
+    known_filter = np.random.choice(known_filters)
+    if known_filter == "RRC":
+        return common_filters.rrc(modulation_type), "RRC"
+    elif known_filter == "RC":
+        return common_filters.rc(modulation_type), "RC"
+    elif known_filter == "Gaussian":
+        return common_filters.gaussian(modulation_type), "GAUSSIAN"
+    elif known_filter == "Sinc":
+        return common_filters.sinc(modulation_type), "SINC"
+
+def apply_upsampling(signal: np.ndarray, sps: int=None) -> np.ndarray:
+    """Apply upsampling to the modulated signal."""
+    # Randomly select a symbol rate (SPS)
+    if sps is None:
+        sps = np.random.choice(sps_rates)
+
+    # Upsample the signal by a random factor
+    signal = np.repeat(signal, sps, axis=0)
+
+    return signal, sps
+
+def generate_random_filter(sps: int=None) -> np.ndarray:
+    """Generate a random FIR filter."""
     # Define multipliers
     multipliers = np.arange(4, 10, 1)
 
@@ -180,60 +208,35 @@ def generate_fir_filter_taps(sps: int) -> np.ndarray:
     # Restrict the number of taps to a range (16, 512)
     num_taps = np.clip(num_taps, 16, 513)
 
-    # Randomly generate commonly used FIR filter taps
-    if np.random.rand() < 0:
-        known_filter = np.random.choice(known_filters)
-        if known_filter == "RRC":
-            pass
-            return common_filters.rrc(num_taps), None, "RRC"
-        elif known_filter == "RC":
-            pass
-            return common_filters.rc(num_taps), None, "RC"
-        elif known_filter == "Gaussian":
-            pass
-            return common_filters.gaussian(num_taps), None, "GAUSSIAN"
-        elif known_filter == "Sinc":
-            pass
-            return common_filters.sinc(num_taps), None, "SINC"
-    else:
-        # Generate random FIR filter taps
-        filter_taps = np.random.uniform(-1, 1, num_taps)
+    filter_taps = np.random.uniform(-1, 1, num_taps)
 
-        # Apply a random windowing function
-        window_type = np.random.choice(windowing_functions)
-        if window_type == "hamming":
-            window = np.hamming(num_taps)
-        elif window_type == "hanning":
-            window = np.hanning(num_taps)
-        elif window_type == "blackman":
-            window = np.blackman(num_taps)
-        elif window_type == "bartlett":
-            window = np.bartlett(num_taps)
+    # Apply a random windowing function
+    window_type = np.random.choice(windowing_functions)
+    if window_type == "hamming":
+        window = np.hamming(num_taps)
+    elif window_type == "hanning":
+        window = np.hanning(num_taps)
+    elif window_type == "blackman":
+        window = np.blackman(num_taps)
+    elif window_type == "bartlett":
+        window = np.bartlett(num_taps)
 
-        filter_taps *= window
+    filter_taps *= window
 
-        # Normalize the filter taps to have unit energy, mimicking practical pulse shaping filters
-        filter_taps /= np.linalg.norm(filter_taps, 2)
+    # Normalize the filter taps to have unit energy, mimicking practical pulse shaping filters
+    filter_taps /= np.linalg.norm(filter_taps, 2)
 
-    return filter_taps, window_type, None
+    return filter_taps
 
-def apply_fir_filter(signal: np.ndarray, sps: int=None, filter_taps: np.ndarray=None) -> np.ndarray:
-    """Apply FIR filter to the signal."""
-    if sps is None:
-        sps = np.random.choice(sps_rates)
-
-    upsampled_signal = np.repeat(signal, sps, axis=0)
-    
-    if filter_taps is None:
-        filter_taps, windowing_type, known_filter = generate_fir_filter_taps(sps)
-
+def apply_filter(signal: np.ndarray, filter_taps: np.ndarray) -> np.ndarray:
+    """Apply the FIR filter to the modulated signal."""
     filtered_signal = np.column_stack((
-        scipy.signal.lfilter(filter_taps, 1.0, upsampled_signal[:, 0]),  # Filter I
-        scipy.signal.lfilter(filter_taps, 1.0, upsampled_signal[:, 1])   # Filter Q
+        scipy.signal.lfilter(filter_taps, 1.0, signal[:, 0]),  # Filter I
+        scipy.signal.lfilter(filter_taps, 1.0, signal[:, 1])   # Filter Q
     ))
 
-    return filtered_signal, filter_taps, sps, windowing_type, known_filter
-   
+    return filtered_signal
+
 def apply_noise(signal: np.ndarray, noise_level: float=None) -> Tuple[np.ndarray, float]:
     """Apply noise to the signal."""
     if noise_level is None:
@@ -255,7 +258,15 @@ def generate_data(dataset_size: int=DATASET_SIZE, plot=False, store=False) -> No
         modulated_signal, modulation_type = apply_modulation(bitstream)
 
         # Upsample and apply the pulse shaping filter
-        filtered_signal, filter_taps, sps_rate, windowing_function, known_filter = apply_fir_filter(modulated_signal)
+        if np.random.rand() < 0:
+            filter_taps, known_filter_name = generate_known_filter(modulation_type)
+            print(f"Filter Taps Shape: {filter_taps.shape}")
+        else:
+            modulated_signal, sps = apply_upsampling(modulated_signal)
+            filter_taps = generate_random_filter(sps)
+
+        # Apply the FIR filter
+        filtered_signal = apply_filter(modulated_signal, filter_taps)
 
         # Apply noise
         generated_signal, noise_level = apply_noise(filtered_signal)
@@ -266,7 +277,7 @@ def generate_data(dataset_size: int=DATASET_SIZE, plot=False, store=False) -> No
 
             plt.subplot(4, 1, 1)
             plt.plot(filtered_signal, label='Pre-Noise Signal')
-            plt.title('Pre-Filtered Signal')
+            plt.title('Pre-Noise Signal')
             plt.grid(True)
 
             """ 
@@ -290,11 +301,6 @@ def generate_data(dataset_size: int=DATASET_SIZE, plot=False, store=False) -> No
             plt.stem(filter_taps, label='FIR Filter Taps')
             plt.title('FIR Filter Taps')
             plt.grid(True)
-
-            if windowing_function:
-                plt.suptitle(f'Signal Data: {modulation_type} & {num_bits} bits, SPS: {sps_rate},  Windowing: {windowing_function}, Noise Level: {noise_level}')
-            else:
-                plt.suptitle(f'Signal Data: {modulation_type} & {num_bits} bits, SPS: {sps_rate},  Known Filter: {known_filter}, Noise Level: {noise_level}')
             plt.tight_layout()
             plt.show()
             plt.close()
