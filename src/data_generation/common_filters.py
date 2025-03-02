@@ -121,7 +121,6 @@ def gaussian(modulation_type: str=None) -> np.ndarray:
     # Normalize the filter energy to 1
     gaussian_filter /= np.sqrt(np.sum(gaussian_filter**2))
 
-    print(f"Number of taps: {num_taps}")
     return gaussian_filter
 
 def sinc(modulation_type: str=None) -> np.ndarray:

@@ -1,32 +1,21 @@
 Workflow: 
-    1. 
-    Generate and train based on basic configurations like a known modulation scheme (e.g., BPSK), 
-    a fixed upsampling rate (e.g. 2 SPS), a known windowing function, and a random FIR filter with no noise. 
+    1. Generate and train based on basic configurations like a known modulation scheme (e.g., BPSK), 
+    a fixed upsampling rate (e.g. 2 SPS), a known windowing function, and random/known FIR filters with no noise. 
     This will be the baseline for comparison and analysis. Additionally, depending on the results, if they
     are poor, see if a model can learn on e FIR filter function like RRC.
-        Random bitstream, BPSK, 2 SPS, hamming window, random FIR filter, no noise.
-        Random bitstream, 8PSK, 4 SPS, hamming window, random FIR filter, low noise.
+        Random bitstream, BPSK, 2 SPS, hamming window, random/known FIR filter, no noise.
+        Random bitstream, 8PSK, 4 SPS, hamming window, random/known FIR filter, low noise.
 
-        Depending:
-            Random bitstream, 8PSK, 4 SPS, hamming window, random RRC configuration, low noise.
+    2. Increase complexity incrementally by introducing randomness in a signel parameter.
+        Random bitstream, 8PSK, random SPS, hamming window, random/known FIR filter, low noise. 
+        Random bitstream, random modulation, 4 SPS, hamind window, random/known FIR filter, low noise.
+        Random bitstream, 8PSK, 4 SPS, random window, random/known FIR filter, low noise.
+        Random bitstream, 8PSK, 4 SPS, hamming window, random/known FIR filter, random noise,
 
-    2. 
-    Increase complexity incrementally by introducing randomness in a signel parameter.
-        Random bitstream, 8PSK, random SPS, hamming window, random FIR filter, low noise. 
-        Random bitstream, random modulation, 4 SPS, hamind window, random FIR filter, low noise.
-        Random bitstream, 8PSK, 4 SPS, random window, random FIR filter, low noise.
-        Random bitstream, 8PSK, 4 SPS, hamming window, random FIR filter, random noise,
+    3. Total randomness:
+        Random bitstream, random modulation, random SPS, random window, random/known FIR filter, random noise level.
 
-    3. 
-    Total randomness:
-        Random bitstream, random modulation, random SPS, random window, random FIR filter, random noise level.
-
-
-Loss Function: 
-    L = (lambda) * (Loss Power Ratio) + (1 - lambda) * (Loss MSE)
-        : Loss Power Ratio : 
-            1. Ideal Signal Power = Power(Actual FIR Filter Taps * Noisy Input Signal)
-            2. Predicted Signal Power = Power(Predicted FIR Filter Taps * Noisy Input Signal)
-            3. Loss Power Ratio = | (Ideal Signal Power)/(Predicted Signal Power) - 1| ** 2
-        : Loss Mean Squared Error :
-            1. Loss MSE = (Actual FIR Filter Taps - Predicted Filter Taps) ** 2 / # of Taps
+Note: When generating the filters, the known FIR filters (e.g., RRC, Sinc) do not rely on random SPS (samples per symbol)
+or random windowing functions. Instead, they inherently incorporate randomness based on the randomly selected bitrate and
+sampling rate. Additionally, the ratio of completely random FIR filters to known FIR filters will be 0.75, meaning that 75% 
+of the filters will be entirely random, while the remaining 25% will be based on known filter designs.
