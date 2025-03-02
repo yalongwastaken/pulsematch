@@ -5,7 +5,6 @@
 #              and Quadrature), which is commonly used in digital communication systems for representing complex signals.
 #
 # TODO: Implement HDF5 file generation and storage.
-# TODO: Clean code.
 
 # Imports
 import modulation
@@ -60,8 +59,17 @@ noise_levels = [
     1.0,
 ]
 
-def generate_bitstream(num_bits: int=None) -> np.ndarray:
-    """Generate a random bitstream of given length."""
+def generate_bitstream(num_bits: int=None) -> Tuple[np.ndarray, int]:
+    """
+    Generate a random bitstream of given length.
+    
+    Parameters:
+    - num_bits (int): Length of the bitstream. If None, a random length between BITSTREAM_SIZE_MIN and BITSTREAM_SIZE_MAX is chosen.
+
+    Returns:
+    - bitstream (np.ndarray): Randomly generated bitstream of 0s and 1s.
+    - num_bits (int): Length of the generated bitstream.
+    """
     if num_bits is None:
         num_bits = np.random.uniform(BITSTREAM_SIZE_MIN, BITSTREAM_SIZE_MAX)
         num_bits = int(num_bits)
@@ -69,7 +77,17 @@ def generate_bitstream(num_bits: int=None) -> np.ndarray:
     return np.random.randint(0, 2, num_bits), num_bits
 
 def apply_modulation(bitstream: np.ndarray, modulation_type: str=None) -> Tuple[np.ndarray, str]:
-    """Apply modulation to the bitstream."""
+    """
+    Apply modulation to the bitstream.
+
+    Parameters:
+    - bitstream (np.ndarray): Input bitstream.
+    - modulation_type (str): Type of modulation to apply. If None, a random modulation type is chosen.
+
+    Returns:
+    - modulated_signal (np.ndarray): Modulated signal.
+    - modulation_type (str): Type of modulation applied.
+    """
     if modulation_type is None:
         modulation_type = np.random.choice(modulation_types)
 
@@ -99,8 +117,17 @@ def apply_modulation(bitstream: np.ndarray, modulation_type: str=None) -> Tuple[
 
     return modulated_signal, modulation_type
 
-def generate_known_filter(modulation_type: str) -> np.ndarray:
-    """Generate a known FIR filter (RRC, RC, etc.)."""
+def generate_known_filter(modulation_type: str) -> Tuple[np.ndarray, str]:
+    """
+    Generate a known FIR filter (RRC, RC, etc.).
+    
+    Parameters:
+    - modulation_type (str): Type of modulation used.
+
+    Returns:
+    - filter_taps (np.ndarray): Coefficients of the FIR filter.
+    - filter_name (str): Name of the filter.
+    """
     known_filter = np.random.choice(known_filters)
 
     # Root Raised Cosine (RRC) filter
@@ -119,9 +146,18 @@ def generate_known_filter(modulation_type: str) -> np.ndarray:
     elif known_filter == "Sinc":
         return common_filters.sinc(modulation_type), "SINC"
 
-def apply_upsampling(signal: np.ndarray, sps: int=None) -> np.ndarray:
-    """Apply upsampling to the modulated signal."""
-    # Randomly select a symbol rate (SPS)
+def apply_upsampling(signal: np.ndarray, sps: int=None) -> Tuple[np.ndarray, int]:
+    """
+    Apply upsampling to the modulated signal.
+    
+    Parameters:
+    - signal (np.ndarray): Input modulated signal.
+    - sps (int): Symbol rate. If None, a random symbol rate is chosen.
+
+    Returns:
+    - signal (np.ndarray): Upsampled signal.
+    - sps (int): Symbol rate used for upsampling.
+    """
     if sps is None:
         sps = np.random.choice(sps_rates)
 
@@ -130,8 +166,17 @@ def apply_upsampling(signal: np.ndarray, sps: int=None) -> np.ndarray:
 
     return signal, sps
 
-def generate_random_filter(sps: int=None) -> np.ndarray:
-    """Generate a random FIR filter."""
+def generate_random_filter(sps: int=None) -> Tuple[np.ndarray, str]:
+    """
+    Generate a random FIR filter.
+    
+    Parameters:
+    - sps (int): Symbol rate.
+
+    Returns:
+    - filter_taps (np.ndarray): Coefficients of the FIR filter.
+    - filter_name (str): Name of the filter.
+    """
     # Define multipliers
     multipliers = np.arange(4, 10, 1)
 
@@ -170,7 +215,16 @@ def generate_random_filter(sps: int=None) -> np.ndarray:
     return filter_taps, "RANDOM"
 
 def apply_filter(signal: np.ndarray, filter_taps: np.ndarray) -> np.ndarray:
-    """Apply the FIR filter to the modulated signal."""
+    """
+    Apply the FIR filter to the modulated signal.
+    
+    Parameters:
+    - signal (np.ndarray): Input modulated signal.
+    - filter_taps (np.ndarray): Coefficients of the FIR filter.
+
+    Returns:
+    - filtered_signal (np.ndarray): Filtered signal.
+    """
     filtered_signal = np.column_stack((
         scipy.signal.lfilter(filter_taps, 1.0, signal[:, 0]),  # Filter I
         scipy.signal.lfilter(filter_taps, 1.0, signal[:, 1])   # Filter Q
@@ -179,7 +233,17 @@ def apply_filter(signal: np.ndarray, filter_taps: np.ndarray) -> np.ndarray:
     return filtered_signal
 
 def apply_noise(signal: np.ndarray, noise_level: float=None) -> Tuple[np.ndarray, float]:
-    """Apply noise to the signal."""
+    """
+    Apply noise to the signal.
+    
+    Parameters:
+    - signal (np.ndarray): Input signal.
+    - noise_level (float): Noise level. If None, a random noise level is chosen.
+
+    Returns:
+    - noisy_signal (np.ndarray): Noisy signal.
+    - noise_level (float): Noise level used.
+    """
     if noise_level is None:
         noise_level = np.random.choice(noise_levels)
 
@@ -187,6 +251,7 @@ def apply_noise(signal: np.ndarray, noise_level: float=None) -> Tuple[np.ndarray
 
     noise = np.random.normal(0, noise_range, signal.shape)
     noisy_signal = signal + noise
+
     return noisy_signal, noise_level
 
 def generate_data(dataset_size: int=DATASET_SIZE, ratio: float=0.5, plot=False, store=False) -> None:
@@ -255,5 +320,6 @@ def generate_data(dataset_size: int=DATASET_SIZE, ratio: float=0.5, plot=False, 
         if store:
             pass
 
+# View the generated data
 if __name__ == "__main__":
     generate_data(dataset_size=10, ratio=0.5, plot=True, store=False)
