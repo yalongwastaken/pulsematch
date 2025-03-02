@@ -47,7 +47,15 @@ modulation_types = {
 }
 
 def rrc(modulation_type: str=None) -> np.ndarray:
-    """Generate a root raised cosine filter."""
+    """
+    Generate a root raised cosine filter.
+    
+    Parameters:
+    - modulation_type (str): The modulation type (e.g., "BPSK", "QPSK", etc.)
+
+    Returns:
+    - rrc_filter (np.ndarray): The generated root raised cosine filter.
+    """
     # Ranom sampling rate and bitrate
     bitrate = np.random.choice(bitrates)
     sampling_rate = np.random.choice(sampling_rate_multiplier) * bitrate
@@ -72,7 +80,15 @@ def rrc(modulation_type: str=None) -> np.ndarray:
     return rrc_filter
 
 def rc(modulation_type: str=None) -> np.ndarray:
-    """Generate a raised cosine filter."""
+    """
+    Generate a raised cosine filter.
+    
+    Parameters:
+    - modulation_type (str): The modulation type (e.g., "BPSK", "QPSK", etc.)
+
+    Returns:
+    - rc_filter (np.ndarray): The generated raised cosine filter.
+    """
     # Ranom sampling rate and bitrate
     bitrate = np.random.choice(bitrates)
     sampling_rate = np.random.choice(sampling_rate_multiplier) * bitrate
@@ -98,7 +114,15 @@ def rc(modulation_type: str=None) -> np.ndarray:
     return rc_filter
 
 def gaussian(modulation_type: str=None) -> np.ndarray:
-    """Generate a Gaussian filter."""
+    """
+    Generate a Gaussian filter.
+    
+    Parameters:
+    - modulation_type (str): The modulation type (e.g., "BPSK", "QPSK", etc.)
+
+    Returns:
+    - gaussian_filter (np.ndarray): The generated Gaussian filter.
+    """
     # Ranom sampling rate and bitrate
     bitrate = np.random.choice(bitrates)
     sampling_rate = np.random.choice(sampling_rate_multiplier) * bitrate
@@ -124,7 +148,15 @@ def gaussian(modulation_type: str=None) -> np.ndarray:
     return gaussian_filter
 
 def sinc(modulation_type: str=None) -> np.ndarray:
-    """Generate a sinc filter."""
+    """
+    Generate a sinc filter.
+    
+    Parameters:
+    - modulation_type (str): The modulation type (e.g., "BPSK", "QPSK", etc.)
+
+    Returns:
+    - sinc_filter (np.ndarray): The generated sinc filter.
+    """
     # Ranom sampling rate and bitrate
     bitrate = np.random.choice(bitrates)
     sampling_rate = np.random.choice(sampling_rate_multiplier) * bitrate
