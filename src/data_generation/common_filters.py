@@ -1,9 +1,12 @@
 # Author: Anthony Yalong
 # Description: Script file to generate common filters (RRC, RC, SINC, GAUSSIAN) for PulseMatch.
 
+# Imports
 import numpy as np
 import commpy as cp
 import matplotlib.pyplot as plt
+
+from typing import Tuple
 
 bitrates = [
     1000,       # 1 kbps
@@ -46,15 +49,20 @@ modulation_types = {
     "64QAM": 6,
 }
 
-def rrc(modulation_type: str=None) -> np.ndarray:
+def rrc(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float]:
     """
     Generate a root raised cosine filter.
     
-    Parameters:
+    Parameters
+    ----------
     - modulation_type (str): The modulation type (e.g., "BPSK", "QPSK", etc.)
 
-    Returns:
+    Returns
+    -------
     - rrc_filter (np.ndarray): The generated root raised cosine filter.
+    - symbol_rate (float): The symbol rate.
+    - sampling_rate (float): The sampling rate.
+    - roll_off (float): The roll-off factor.
     """
     # Ranom sampling rate and bitrate
     bitrate = np.random.choice(bitrates)
@@ -77,17 +85,23 @@ def rrc(modulation_type: str=None) -> np.ndarray:
 
     # Normalize the filter energy to 1
     rrc_filter /= np.sqrt(np.sum(rrc_filter**2))
-    return rrc_filter
 
-def rc(modulation_type: str=None) -> np.ndarray:
+    return rrc_filter, symbol_rate, sampling_rate, roll_off
+
+def rc(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float]:
     """
     Generate a raised cosine filter.
     
-    Parameters:
+    Parameters
+    ----------
     - modulation_type (str): The modulation type (e.g., "BPSK", "QPSK", etc.)
 
-    Returns:
+    Returns
+    -------
     - rc_filter (np.ndarray): The generated raised cosine filter.
+    - symbol_rate (float): The symbol rate.
+    - sampling_rate (float): The sampling rate.
+    - roll_off (float): The roll-off factor.
     """
     # Ranom sampling rate and bitrate
     bitrate = np.random.choice(bitrates)
@@ -111,17 +125,22 @@ def rc(modulation_type: str=None) -> np.ndarray:
     # Normalize the filter energy to 1
     rc_filter /= np.sqrt(np.sum(rc_filter**2))
 
-    return rc_filter
+    return rc_filter, symbol_rate, sampling_rate, roll_off
 
-def gaussian(modulation_type: str=None) -> np.ndarray:
+def gaussian(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float]:
     """
     Generate a Gaussian filter.
     
-    Parameters:
+    Parameters
+    ----------
     - modulation_type (str): The modulation type (e.g., "BPSK", "QPSK", etc.)
 
-    Returns:
+    Returns
+    -------
     - gaussian_filter (np.ndarray): The generated Gaussian filter.
+    - symbol_rate (float): The symbol rate.
+    - sampling_rate (float): The sampling rate.
+    - roll_off (float): The roll-off factor.
     """
     # Ranom sampling rate and bitrate
     bitrate = np.random.choice(bitrates)
@@ -145,17 +164,22 @@ def gaussian(modulation_type: str=None) -> np.ndarray:
     # Normalize the filter energy to 1
     gaussian_filter /= np.sqrt(np.sum(gaussian_filter**2))
 
-    return gaussian_filter
+    return gaussian_filter, symbol_rate, sampling_rate, roll_off
 
 def sinc(modulation_type: str=None) -> np.ndarray:
     """
     Generate a sinc filter.
     
-    Parameters:
+    Parameters
+    ----------
     - modulation_type (str): The modulation type (e.g., "BPSK", "QPSK", etc.)
 
-    Returns:
+    Returns
+    -------
     - sinc_filter (np.ndarray): The generated sinc filter.
+    - symbol_rate (float): The symbol rate.
+    - sampling_rate (float): The sampling rate.
+    - roll_off (float): The roll-off factor.
     """
     # Ranom sampling rate and bitrate
     bitrate = np.random.choice(bitrates)
@@ -179,7 +203,7 @@ def sinc(modulation_type: str=None) -> np.ndarray:
     # Normalize the filter energy to 1
     sinc_filter /= np.sqrt(np.sum(sinc_filter**2))
 
-    return sinc_filter
+    return sinc_filter, symbol_rate, sampling_rate, roll_off
 
 
 if __name__ == "__main__":
