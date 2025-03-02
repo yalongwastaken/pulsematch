@@ -4,81 +4,6 @@
 #              upsampling, pulse shaping via FIR filters, and the addition of noise. The generated data is in IQ format (In-phase 
 #              and Quadrature), which is commonly used in digital communication systems for representing complex signals.
 #
-# Rationale:
-# The code simulates a simplified signal generation pipeline similar to the transmission chain in digital communication systems.
-# It performs the following steps:
-#
-# 1. Bitstream Generation: A random bitstream is generated to simulate real-world data transmission. The length of the bitstream 
-#    varies between 1024 and 65536 bits, corresponding to typical frame sizes used in various communication protocols (e.g., Ethernet, 
-#    Wi-Fi, LTE, 5G).
-# 
-# 2. Modulation: The generated bitstream is modulated using common modulation schemes such as BPSK, QPSK, 8PSK, 16QAM, and higher-order 
-#    QAM schemes. These modulations are representative of real-world digital communication systems that map bits to symbols in the 
-#    complex plane.
-#
-# 3. Pulse Shaping: The modulated signal is upsampled and passed through a pulse shaping filter (FIR filter). The filter is either a known
-#    filter (e.g., RRC, RC, Gaussian, Sinc) or a randomly generated filter. The purpose of pulse shaping is to control the bandwidth
-#    of the transmitted signal and reduce inter-symbol interference (ISI). The generation of the filters follows two approaches, which 
-#    align to the theoretical background of digital communication systems:
-#
-#    - Known Filters: The known filters used to synthesize data are Root Raised Cosine (RRC), Raised Cosine (RC), Gaussian, and Sinc filters.
-#      These filters are defined be randomly selecting a bitrate, sampling rate, and roll-of factor, which are used to calculate and determine the
-#      filter and its requirements. The filter taps are generated using commpy and normalized to have unit energy, mimicking practical pulse shaping filters.
-#      Randomly Generated: Bitrate, Sampling Rate, and Roll-off Factor
-#      1. Bitrate: The bitrate is randomly selected from a set of common bitrates (1 kbps to 5 Gbps) to represent different data rates.
-#      2. Sampling Rate: The sampling rate is randomly selected from a set of multipliers (2, 4, 8, 16) to represent different oversampling rates.
-#      3. Roll-off Factor: The roll-off factor is randomly selected from a range of (0, 1) to represent different filter shapes.
-#      # Calculated Requirements: number of taps, symbol rate, symbol period, and roll-off factor.
-#      Symbol Rate: The symbol rate is calculated by dividing the bitrate by the modulation type.
-#      Symbol Period: The symbol period is determined by taking the reciprocal of the symbol rate.
-#      Number of Taps: The number of taps is calculated based on applying a random integer multiple (4, 10) to the SPS. (SPS = symbol rate * symbol period).
-#      Roll-off Factor: See above.
-#
-#    - Randomly Generated: The random filter generation process involves generating a random number of taps based a multiple (4, 10) of the SPS. Next, based
-#      on the number of taps, the filter taps are generated using a uniform distribution between -1 and 1. Following this, a random windowing function (Hamming, Hanning,
-#      Blackman, Bartlett) is applied to the filter taps, mimicking the windowing process used in practical FIR filter design. Finally, the filter taps are normalized to have unit energy.
-#
-# 4. Noise Application: Noise, modeled as additive white Gaussian noise (AWGN), is introduced to simulate real-world channel impairments. 
-#    The noise level can be adjusted to represent different signal-to-noise ratios (SNRs). The addition of AWGN, similary to the sps process
-#    is relatively simple. To potentially improve the noise application process, more complex noise models (e.g., Rayleigh, Rician)
-#
-# Notes:
-# - Time: 
-#   - The code does not explicitly incorporate a time axis. Instead, the data is represented purely in IQ format. For the known filters, the time axis
-#    is implicitly represented through the filter taps, which are generated based on predefined bitrates and sampling. For the randomly generated filters,
-#    the time axis is represented through the number of taps, which are calculated based on predefined SPS rates. Overall, the time axis is not explicitly
-#    included in the implementation, as the focus is on generating synthetic data for training a model to learn pulse shaping functions. Note, there is 
-#    this discrepency between teh two approaches, as the known filters' requirements for generation are different/more dependent on known system parameters.
-#   
-# - IQ Representation: 
-#   - The IQ format is a standard in digital communications where the signal is represented by two orthogonal 
-#     components: the in-phase (I) and quadrature (Q) components. These components carry the encoded information and are used to 
-#     represent complex-valued signals.
-#
-# - Theoretical Alignment:
-#   - In theory, digital communication systems rely on a combination of modulation schemes, pulse shaping, and noise modeling 
-#     to encode and transmit information efficiently and accurately. This code attempts to accurately reflect that pipeline
-#     Through the previously mentioned process. While the time axis is not explicitly included in the implementation, this 
-#     concern is addressed, as the filters are generated with the time axis in mind (See above).
-#
-# - Limitations: 
-#   - While this approach mimics the key theoretical components of digital communication, the absence 
-#     of an explicit time axis means that the symbol rate is not directly/explicitly represented as a time interval. Instead, the data is sampled 
-#     based on the SPS rate. In real systems, time and symbol rate are used to align the transmitted signal with a receiver's 
-#     sampling process. However, for training a model to learn pulse shaping functions, I believe this approach is sufficient,
-#     as the focus of PulseMatch is to determine if a machine learning model can learn any arbitrary pulse shaping function given
-#     different modulation schemes, upsampling rates, and noise levels and not necessarily about receiver alignment.
-#
-# Sources:
-#   ASK modulation/background: https://www.elprocus.com/amplitude-shift-keying-ask-working-and-applications/
-#   PSK modulation/background: https://www.elprocus.com/phase-shift-keying-psk-types-and-its-applications/
-#   FSK modulation/background: https://eureka.patsnap.com/blog/what-is-fsk/
-#   QAM modulation/background: https://eureka.patsnap.com/blog/what-is-qam/ 
-#   Upsampling background: https://www.ni.com/docs/en-US/bundle/rfmx-demod/page/samples-per-symbol.html?srsltid=AfmBOorsVA4-lHHO6izwS6Y4FIlAevAkJU2SLIKva6LmogLAY7yzl2wZ
-#   FIR filter background: https://thesai.org/Downloads/Volume2No3/Paper%2012-%20Pulse%20Shape%20Filtering%20in%20Wireless%20Communication-A%20Critical%20Analysis.pdf
-#   Windowing function background: https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://library.oapen.org/bitstream/20.500.12657/41686/1/9781466515840.pdf&ved=2ahUKEwiG7ZyivN-LAxXwFVkFHUEmAYAQFnoECCoQAQ&usg=AOvVaw1fb9PgMOw9l5kNdrzzhSNF 
-#   AWGN noise/background: https://wirelesspi.com/additive-white-gaussian-noise-awgn/
-
 # TODO: Implement HDF5 file generation and storage.
 # TODO: Clean code.
 
@@ -177,12 +102,20 @@ def apply_modulation(bitstream: np.ndarray, modulation_type: str=None) -> Tuple[
 def generate_known_filter(modulation_type: str) -> np.ndarray:
     """Generate a known FIR filter (RRC, RC, etc.)."""
     known_filter = np.random.choice(known_filters)
+
+    # Root Raised Cosine (RRC) filter
     if known_filter == "RRC":
         return common_filters.rrc(modulation_type), "RRC"
+    
+    # Raised Cosine (RC) filter
     elif known_filter == "RC":
         return common_filters.rc(modulation_type), "RC"
+    
+    # Gaussian filter
     elif known_filter == "Gaussian":
         return common_filters.gaussian(modulation_type), "GAUSSIAN"
+    
+    # Sinc filter
     elif known_filter == "Sinc":
         return common_filters.sinc(modulation_type), "SINC"
 
@@ -212,12 +145,20 @@ def generate_random_filter(sps: int=None) -> np.ndarray:
 
     # Apply a random windowing function
     window_type = np.random.choice(windowing_functions)
+
+    # Hamming window
     if window_type == "hamming":
         window = np.hamming(num_taps)
+
+    # Hanning window
     elif window_type == "hanning":
         window = np.hanning(num_taps)
+
+    # Blackman window
     elif window_type == "blackman":
         window = np.blackman(num_taps)
+
+    # Bartlett window
     elif window_type == "bartlett":
         window = np.bartlett(num_taps)
 
@@ -226,7 +167,7 @@ def generate_random_filter(sps: int=None) -> np.ndarray:
     # Normalize the filter taps to have unit energy, mimicking practical pulse shaping filters
     filter_taps /= np.linalg.norm(filter_taps, 2)
 
-    return filter_taps
+    return filter_taps, "RANDOM"
 
 def apply_filter(signal: np.ndarray, filter_taps: np.ndarray) -> np.ndarray:
     """Apply the FIR filter to the modulated signal."""
@@ -248,8 +189,20 @@ def apply_noise(signal: np.ndarray, noise_level: float=None) -> Tuple[np.ndarray
     noisy_signal = signal + noise
     return noisy_signal, noise_level
 
-def generate_data(dataset_size: int=DATASET_SIZE, plot=False, store=False) -> None:
-    """Generate the data for PulseMatch."""
+def generate_data(dataset_size: int=DATASET_SIZE, ratio: float=0.5, plot=False, store=False) -> None:
+    """
+    Generate the data for PulseMatch mimicking the data flow of digital communication systems and store
+    it in an HDF5 file.
+    
+    Parameters:
+    - dataset_size (int): Number of samples to generate.
+    - ratio (float): Ratio of known to random filters.
+    - plot (bool): If True, plot the generated signals and filters.
+    - store (bool): If True, store the generated data in HDF5 format.
+
+    Returns:
+    - None
+    """
     for _ in range(dataset_size):
         # Generate a random bitstream
         bitstream, num_bits = generate_bitstream()
@@ -258,12 +211,11 @@ def generate_data(dataset_size: int=DATASET_SIZE, plot=False, store=False) -> No
         modulated_signal, modulation_type = apply_modulation(bitstream)
 
         # Upsample and apply the pulse shaping filter
-        if np.random.rand() < 0:
-            filter_taps, known_filter_name = generate_known_filter(modulation_type)
-            print(f"Filter Taps Shape: {filter_taps.shape}")
+        if np.random.rand() < ratio:
+            filter_taps, filter_name = generate_known_filter(modulation_type)
         else:
             modulated_signal, sps = apply_upsampling(modulated_signal)
-            filter_taps = generate_random_filter(sps)
+            filter_taps, filter_name = generate_random_filter(sps)
 
         # Apply the FIR filter
         filtered_signal = apply_filter(modulated_signal, filter_taps)
@@ -280,13 +232,6 @@ def generate_data(dataset_size: int=DATASET_SIZE, plot=False, store=False) -> No
             plt.title('Pre-Noise Signal')
             plt.grid(True)
 
-            """ 
-            plt.subplot(4, 1, 1)
-            plt.plot(modulated_signal, label='Modulated Signal')
-            plt.title('Pre-Filtered Signal')
-            plt.grid(True)
-            """
-
             plt.subplot(4, 1, 2)
             plt.plot(generated_signal[:, 0], label='I Component')
             plt.title('I Component')
@@ -301,6 +246,7 @@ def generate_data(dataset_size: int=DATASET_SIZE, plot=False, store=False) -> No
             plt.stem(filter_taps, label='FIR Filter Taps')
             plt.title('FIR Filter Taps')
             plt.grid(True)
+            plt.suptitle(f'Modulation: {modulation_type}, Filter: {filter_name}, Noise Level: {noise_level:.2f}, Bitstream Size: {num_bits}')
             plt.tight_layout()
             plt.show()
             plt.close()
@@ -310,4 +256,4 @@ def generate_data(dataset_size: int=DATASET_SIZE, plot=False, store=False) -> No
             pass
 
 if __name__ == "__main__":
-    generate_data(dataset_size=10, plot=True, store=False)
+    generate_data(dataset_size=10, ratio=0.5, plot=True, store=False)
