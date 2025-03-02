@@ -10,10 +10,12 @@ def modulate_bpsk(bitstream: np.ndarray) -> np.ndarray:
     """
     Apply BPSK modulation to the input signal.
     
-    Parameters:
+    Parameters
+    ----------
     - bitstream (np.ndarray): Input bitstream (1D array of bits).
 
-    Returns:
+    Returns
+    -------
     - modulated_signal (np.ndarray): Modulated signal (2D array with I and Q components).
     """
     # BPSK mapping IQ: 
@@ -35,10 +37,12 @@ def modulate_qpsk(bitstream: np.ndarray) -> np.ndarray:
     """
     Apply QPSK modulation to the input signal.
     
-    Parameters:
+    Parameters
+    ----------
     - bitstream (np.ndarray): Input bitstream (1D array of bits).
 
-    Returns:
+    Returns
+    -------
     - modulated_signal (np.ndarray): Modulated signal (2D array with I and Q components).
     """
     # QPSK mapping IQ:
@@ -73,10 +77,12 @@ def modulate_8psk(bitstream: np.ndarray) -> np.ndarray:
     """
     Apply 8PSK modulation to the input signal.
 
-    Parameters:
+    Parameters
+    ----------
     - bitstream (np.ndarray): Input bitstream (1D array of bits).
 
-    Returns:
+    Returns
+    -------
     - modulated_signal (np.ndarray): Modulated signal (2D array with I and Q components).
     """
     # 8PSK mapping IQ:
@@ -112,10 +118,12 @@ def modulate_16qam(bitstream: np.ndarray) -> np.ndarray:
     """
     Apply 16QAM modulation to the input signal.
 
-    Parameters:
+    Parameters
+    ----------
     - bitstream (np.ndarray): Input bitstream (1D array of bits).
 
-    Returns:
+    Returns
+    -------
     - modulated_signal (np.ndarray): Modulated signal (2D array with I and Q components).
     """
     # 16QAM mapping IQ:
@@ -161,10 +169,12 @@ def modulate_32qam(bitstream: np.ndarray) -> np.ndarray:
     """
     Apply 32QAM modulation to the input signal.
 
-    Parameters:
+    Parameters
+    ----------
     - bitstream (np.ndarray): Input bitstream (1D array of bits).
 
-    Returns:
+    Returns
+    -------
     - modulated_signal (np.ndarray): Modulated signal (2D array with I and Q components).
     """
     # 32QAM mapping IQ:
@@ -230,10 +240,12 @@ def modulate_64qam(bitstream: np.ndarray) -> np.ndarray:
     """
     Apply 64QAM modulation to the input signal.
     
-    Parameters:
+    Parameters
+    ----------
     - bitstream (np.ndarray): Input bitstream (1D array of bits).
 
-    Returns:
+    Returns
+    -------
     - modulated_signal (np.ndarray): Modulated signal (2D array with I and Q components).
     """
     # 64QAM mapping IQ:
