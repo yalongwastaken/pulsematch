@@ -4,9 +4,11 @@
 #              upsampling, pulse shaping via FIR filters, and the addition of noise. The generated data is in IQ format (In-phase 
 #              and Quadrature), which is commonly used in digital communication systems for representing complex signals.
 #
-# TODO: Implement HDF5 file generation and storage.
+# TODO: Implement file storage.
+# TODO: Research filter tap resizing.
 
 # Imports
+import h5py
 import modulation
 import common_filters
 import numpy as np
@@ -75,7 +77,7 @@ def generate_bitstream(num_bits: int=None) -> Tuple[np.ndarray, int]:
     if num_bits is None:
         num_bits = np.random.uniform(BITSTREAM_SIZE_MIN, BITSTREAM_SIZE_MAX)
         num_bits = int(num_bits)
-    
+
     return np.random.randint(0, 2, num_bits), num_bits
 
 def apply_modulation(bitstream: np.ndarray, modulation_type: str=None) -> Tuple[np.ndarray, str]:
@@ -231,7 +233,7 @@ def generate_random_filter(sps: int=None, window_type: str=None) -> Tuple[np.nda
     # Normalize the filter taps to have unit energy, mimicking practical pulse shaping filters
     filter_taps /= np.linalg.norm(filter_taps, 2)
 
-    return filter_taps, "RANDOM"
+    return filter_taps, window_type, "RANDOM"
 
 def apply_filter(signal: np.ndarray, filter_taps: np.ndarray) -> np.ndarray:
     """
@@ -287,11 +289,10 @@ def generate_data(
         window_type: str=None,
         noise_level: float=None,
         plot=False, 
-        store=False
+        store=False,
         ) -> None:
     """
-    Generate the data for PulseMatch mimicking the data flow of digital communication systems and store
-    it in an HDF5 file.
+    Generate the data for PulseMatch mimicking the data flow of digital communication systems and store it.
     
     Parameters
     ----------
@@ -310,78 +311,124 @@ def generate_data(
     ----------
     - None
     """
+    if store:
+        # I/O
+        all_signals = []
+        all_filter_taps = []
+
+        # Shared characterstics
+        all_bitstream_sizes = []
+        all_modulation_types = []
+        all_noise_levels = []
+        all_filter_names = []
+
+        # Known filter characteristics
+        all_bitrates = []
+        all_sampling_rates = []
+        all_roll_offs = []
+
+        # Random filter characteristics
+        all_sps_rates = []
+        all_window_types = []
+
     for _ in range(dataset_size):
         # Generate a random bitstream
-        bitstream, num_bits = generate_bitstream(num_bits=num_bits)
+        _bitstream, _num_bits = generate_bitstream(num_bits=num_bits)
 
         # Apply modulation
-        modulated_signal, modulation_type = apply_modulation(bitstream=bitstream, modulation_type=modulation_type)
+        _modulated_signal, _modulation_type = apply_modulation(bitstream=_bitstream, modulation_type=modulation_type)
 
         # Upsample and apply the pulse shaping filter
         if np.random.rand() < ratio:
-            filter_taps, bitrate, sampling_rate, roll_off, filter_name = generate_known_filter(modulation_type=modulation_type, known_filter=known_filter)
+            _filter_taps, _bitrate, _sampling_rate, _roll_off, _filter_name = generate_known_filter(modulation_type=_modulation_type, known_filter=known_filter)
         else:
-            modulated_signal, sps = apply_upsampling(signal=modulated_signal, sps=sps)
-            filter_taps, filter_name = generate_random_filter(sps=sps, window_type=window_type)
+            _modulated_signal, _sps = apply_upsampling(signal=_modulated_signal, sps=sps)
+            _filter_taps, _window_type, _filter_name = generate_random_filter(sps=_sps, window_type=window_type)
 
-        # Apply the FIR filter
-        filtered_signal = apply_filter(signal=modulated_signal, filter_taps=filter_taps)
+        _filtered_signal = apply_filter(signal=_modulated_signal, filter_taps=_filter_taps)
 
         # Apply noise
-        generated_signal, noise_level = apply_noise(signal=filtered_signal, noise_level=noise_level)
+        _signal, _noise_level = apply_noise(signal=_filtered_signal, noise_level=noise_level)
 
         # Print signal characteristics
-        print(f"Bitstream Size: {num_bits}, Modulation: {modulation_type}, Filter Type: {filter_name}, Noise Level: {noise_level:.2f}")
+        print(f"Bitstream Size: {_num_bits}, Modulation: {_modulation_type}, Filter Type: {_filter_name}, Noise Level: {_noise_level:.2f}")
 
-        if filter_name == "RANDOM":
-            print(f"Samples per Symbol: {sps}, Window Type: {window_type}")
+        if _filter_name == "RANDOM":
+            print(f"Samples per Symbol: {_sps}, Window Type: {_window_type}")
 
         else:
-            print(f"Bit Rate: {bitrate}, Sampling Rate: {sampling_rate}, Roll-off Factor: {roll_off}")
+            print(f"Bit Rate: {_bitrate}, Sampling Rate: {_sampling_rate}, Roll-off Factor: {_roll_off}")
 
         if plot:
             # Plot I and Q components and FIR filter taps
             plt.figure(figsize=(10, 6))
 
             plt.subplot(4, 1, 1)
-            plt.plot(filtered_signal, label='Pre-Noise Signal')
+            plt.plot(_filtered_signal, label='Pre-Noise Signal')
             plt.title('Pre-Noise Signal')
             plt.grid(True)
 
             plt.subplot(4, 1, 2)
-            plt.plot(generated_signal[:, 0], label='I Component')
+            plt.plot(_signal[:, 0], label='I Component')
             plt.title('I Component')
             plt.grid(True)
 
             plt.subplot(4, 1, 3)
-            plt.plot(generated_signal[:, 1], label='Q Component', color='orange')
+            plt.plot(_signal[:, 1], label='Q Component', color='orange')
             plt.title('Q Component')
             plt.grid(True)
 
             plt.subplot(4, 1, 4)
-            plt.stem(filter_taps, label='FIR Filter Taps')
+            plt.stem(_filter_taps, label='FIR Filter Taps')
             plt.title('FIR Filter Taps')
             plt.grid(True)
-            plt.suptitle(f'Modulation: {modulation_type}, Filter: {filter_name}, Noise Level: {noise_level:.2f}, Bitstream Size: {num_bits}')
+            plt.suptitle(f'Modulation: {_modulation_type}, Filter: {_filter_name}, Noise Level: {_noise_level:.2f}, Bitstream Size: {_num_bits}')
             plt.tight_layout()
             plt.show()
             plt.close()
         
-        # TODO: Store the generated data in HDF5 format
         if store:
-            pass
+            # Store characteristics
+            all_signals.append(_signal)
+            all_filter_taps.append(_filter_taps)
+            all_bitstream_sizes.append(_num_bits)
+            all_modulation_types.append(_modulation_type)
+            all_noise_levels.append(_noise_level)
+            all_filter_names.append(_filter_name)
 
-# View the generated data
+            if _filter_name == "RANDOM":
+                # Random filter characteristics
+                all_sps_rates.append(_sps)
+                all_window_types.append(_window_type)
+
+                # Known filter characteristics (None)
+                all_bitrates.append(-1)
+                all_sampling_rates.append(-1)
+                all_roll_offs.append(-1)
+            else:
+                # Random filter characteristics (None)
+                all_sps_rates.append(-1)
+                all_window_types.append(-1)
+
+                # Known filter characteristics
+                all_bitrates.append(_bitrate)
+                all_sampling_rates.append(_sampling_rate)
+                all_roll_offs.append(_roll_off)
+                
+    if store:
+        pass
+
 if __name__ == "__main__":
+    # Visualization
     generate_data(
         dataset_size=10,
         num_bits=None,
         modulation_type=None,
-        ratio=1, 
+        ratio=0.25, 
         known_filter=None,
         sps=None,
         window_type=None,
         noise_level=None,
         plot=True,
-        store=False
+        store=False,
     )
