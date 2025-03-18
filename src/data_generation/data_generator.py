@@ -4,8 +4,6 @@
 #              upsampling, pulse shaping via FIR filters, and the addition of noise. The generated data is in IQ format (In-phase 
 #              and Quadrature), which is commonly used in digital communication systems for representing complex signals.
 #
-# TODO: Implement file storage.
-
 # Imports
 import h5py
 import modulation
@@ -15,7 +13,7 @@ import scipy.signal
 import matplotlib.pyplot as plt
 from typing import Tuple
 
-DEFAULT_FILEPATH = "src/data_generation/dataset.h5"
+DEFAULT_FILEPATH = "src/data/dataset.h5"
 DATASET_SIZE = 1000000
 BITSTREAM_SIZE_MIN = 1024
 BITSTREAM_SIZE_MAX = 65536
@@ -311,8 +309,6 @@ def generate_data(
     if store:
         # I/O
         all_signals = []
-        all_signals_i = []
-        all_signals_q = []
         all_filter_taps = []
 
         # Shared characterstics
@@ -363,8 +359,8 @@ def generate_data(
             plt.figure(figsize=(10, 6))
 
             plt.subplot(4, 1, 1)
-            plt.plot(_filtered_signal, label='Pre-Noise Signal')
-            plt.title('Pre-Noise Signal')
+            plt.plot(_bitstream, label='Bitsream')
+            plt.title('Bitstream')
             plt.grid(True)
 
             plt.subplot(4, 1, 2)
@@ -389,8 +385,6 @@ def generate_data(
         if store:
             # Store characteristics
             all_signals.append(_signal.flatten())
-            all_signals_i.append(_signal[:, 0])
-            all_signals_q.append(_signal[:, 1])
             all_filter_taps.append(_filter_taps)
             all_bitstream_sizes.append(_num_bits)
             all_modulation_types.append(_modulation_type)
@@ -418,6 +412,10 @@ def generate_data(
 
     # Store data in tf.data.Dataset       
     if store:
+        # Pad FIR filter taps to the maximum length
+        max_taps = 1024
+        all_filter_taps = [np.pad(taps, ((max_taps - len(taps)) // 2, (max_taps - len(taps)) - (max_taps - len(taps)) // 2), mode='constant') for taps in all_filter_taps]
+
         with h5py.File(filepath, 'w') as f:
             # Define custom data types
             vlen_arr_dtype = h5py.special_dtype(vlen=np.dtype('float32'))
@@ -425,11 +423,9 @@ def generate_data(
 
             # Input: variable-length IQ signal
             f.create_dataset('signals', (len(all_signals),), dtype=vlen_arr_dtype, data=all_signals)
-            f.create_dataset('signals_i', (len(all_signals_i),), dtype=vlen_arr_dtype, data=all_signals_i)
-            f.create_dataset('signals_q', (len(all_signals_q),), dtype=vlen_arr_dtype, data=all_signals_q)
 
             # Output: same-length FIR filter taps
-            f.create_dataset('filter_taps', (len(all_filter_taps),), dtype=vlen_arr_dtype, data=all_filter_taps)
+            f.create_dataset('filter_taps', data=np.array(all_filter_taps, dtype=np.float32))
 
             # Shared Auxilary characteristics
             f.create_dataset("bitstream_sizes", data=np.array(all_bitstream_sizes), dtype='int32')
@@ -451,15 +447,15 @@ def generate_data(
 if __name__ == "__main__":
     # Visualization
     generate_data(
-        dataset_size=20,
+        dataset_size=100,
         num_bits=None,
         modulation_type=None,
-        ratio=1, 
+        ratio=0.5, 
         known_filter=None,
         sps=None,
         window_type=None,
         noise_level=None,
         plot=False,
         store=True,
-        filepath="src/data/test_dataset.h5",
+        filepath="src/data/dataset.h5",
     )
