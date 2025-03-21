@@ -86,7 +86,7 @@ def rrc(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float]:
     # Normalize the filter energy to 1
     rrc_filter /= np.sqrt(np.sum(rrc_filter**2))
 
-    return rrc_filter, symbol_rate, sampling_rate, roll_off
+    return rrc_filter, bitrate, sampling_rate, roll_off
 
 def rc(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float]:
     """
@@ -125,7 +125,7 @@ def rc(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float]:
     # Normalize the filter energy to 1
     rc_filter /= np.sqrt(np.sum(rc_filter**2))
 
-    return rc_filter, symbol_rate, sampling_rate, roll_off
+    return rc_filter, bitrate, sampling_rate, roll_off
 
 def gaussian(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float]:
     """
@@ -164,7 +164,7 @@ def gaussian(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float
     # Normalize the filter energy to 1
     gaussian_filter /= np.sqrt(np.sum(gaussian_filter**2))
 
-    return gaussian_filter, symbol_rate, sampling_rate, roll_off
+    return gaussian_filter, bitrate, sampling_rate, roll_off
 
 def sinc(modulation_type: str=None) -> np.ndarray:
     """
@@ -203,7 +203,7 @@ def sinc(modulation_type: str=None) -> np.ndarray:
     # Normalize the filter energy to 1
     sinc_filter /= np.sqrt(np.sum(sinc_filter**2))
 
-    return sinc_filter, symbol_rate, sampling_rate, roll_off
+    return sinc_filter, bitrate, sampling_rate, roll_off
 
 
 if __name__ == "__main__":

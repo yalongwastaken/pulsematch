@@ -1,7 +1,7 @@
 Workflow: 
     1. Generate and train based on basic configurations like a known modulation scheme (e.g., BPSK) and
     set noise level.
-        Random bitstream, BPSK, random/known FIR filter, no noise.
+        Random bitstream, 8PSK, random/known FIR filter, no noise.
         Random bitstream, 8PSK, random/known FIR filter, low noise.
         Random bitstream, 32QAM, random/known FIR filter, low noise.
 

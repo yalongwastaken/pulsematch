@@ -4,8 +4,8 @@
 #              upsampling, pulse shaping via FIR filters, and the addition of noise. The generated data is in IQ format (In-phase 
 #              and Quadrature), which is commonly used in digital communication systems for representing complex signals.
 #
-# TODO: Implement file storage.
-# TODO: Research filter tap resizing.
+# TODO: Implement append mode for storing data in HDF5 format: adds to an existing file rather than 'w'.
+#       Allows for the generation of data in batches to avoid memory issues.
 
 # Imports
 import h5py
@@ -16,6 +16,7 @@ import scipy.signal
 import matplotlib.pyplot as plt
 from typing import Tuple
 
+DEFAULT_FILEPATH = "src/data/dataset.h5"
 DATASET_SIZE = 1000000
 BITSTREAM_SIZE_MIN = 1024
 BITSTREAM_SIZE_MAX = 65536
@@ -30,11 +31,10 @@ modulation_types = [
 ]
 
 sps_rates = [
-    2,
-    4,
-    8,
-    16,
-    32,
+    2,   # 2x Nyquist
+    4,   # 4x Nyquist
+    8,   # 8x Nyquist
+    16,  # 16x Nyquist
 ]
 
 known_filters = [
@@ -203,9 +203,6 @@ def generate_random_filter(sps: int=None, window_type: str=None) -> Tuple[np.nda
     # Determine the number of taps based on the symbol rate (SPS)
     num_taps = sps * np.random.choice(multipliers)
 
-    # Restrict the number of taps to a range (16, 512)
-    num_taps = np.clip(num_taps, 16, 513)
-
     filter_taps = np.random.uniform(-1, 1, num_taps)
 
     # Apply a random windowing function
@@ -290,6 +287,9 @@ def generate_data(
         noise_level: float=None,
         plot=False, 
         store=False,
+        verbose=True,
+        write_mode='w',
+        filepath: str=DEFAULT_FILEPATH,
         ) -> None:
     """
     Generate the data for PulseMatch mimicking the data flow of digital communication systems and store it.
@@ -306,6 +306,9 @@ def generate_data(
     - noise_level (float): Noise level. If None, a random noise level is chosen.
     - plot (bool): Whether to plot the generated data.
     - store (bool): Whether to store the generated data in HDF5 format.
+    - verbose (bool): Whether to print the signal characteristics.
+    - write_mode (str): Write mode for storing data in HDF5 format.
+    - filepath (str): Path to store the generated data.
 
     Returns
     ----------
@@ -351,21 +354,22 @@ def generate_data(
         _signal, _noise_level = apply_noise(signal=_filtered_signal, noise_level=noise_level)
 
         # Print signal characteristics
-        print(f"Bitstream Size: {_num_bits}, Modulation: {_modulation_type}, Filter Type: {_filter_name}, Noise Level: {_noise_level:.2f}")
+        if verbose:
+            print(f"Bitstream Size: {_num_bits}, Modulation: {_modulation_type}, Filter Type: {_filter_name}, Noise Level: {_noise_level:.2f}, Num Taps: {len(_filter_taps)}")
 
-        if _filter_name == "RANDOM":
-            print(f"Samples per Symbol: {_sps}, Window Type: {_window_type}")
+            if _filter_name == "RANDOM":
+                print(f"Samples per Symbol: {_sps}, Window Type: {_window_type}")
 
-        else:
-            print(f"Bit Rate: {_bitrate}, Sampling Rate: {_sampling_rate}, Roll-off Factor: {_roll_off}")
+            else:
+                print(f"Bit Rate: {_bitrate}, Sampling Rate: {_sampling_rate}, Roll-off Factor: {_roll_off}")
 
         if plot:
             # Plot I and Q components and FIR filter taps
             plt.figure(figsize=(10, 6))
 
             plt.subplot(4, 1, 1)
-            plt.plot(_filtered_signal, label='Pre-Noise Signal')
-            plt.title('Pre-Noise Signal')
+            plt.plot(_bitstream, label='Bitsream')
+            plt.title('Bitstream')
             plt.grid(True)
 
             plt.subplot(4, 1, 2)
@@ -382,14 +386,14 @@ def generate_data(
             plt.stem(_filter_taps, label='FIR Filter Taps')
             plt.title('FIR Filter Taps')
             plt.grid(True)
-            plt.suptitle(f'Modulation: {_modulation_type}, Filter: {_filter_name}, Noise Level: {_noise_level:.2f}, Bitstream Size: {_num_bits}')
+            plt.suptitle(f'Modulation: {_modulation_type}, Filter: {_filter_name}, Noise Level: {_noise_level:.2f}, Bitstream Size: {_num_bits}, Num Taps: {len(_filter_taps)}')
             plt.tight_layout()
             plt.show()
             plt.close()
         
         if store:
             # Store characteristics
-            all_signals.append(_signal)
+            all_signals.append(_signal.flatten())
             all_filter_taps.append(_filter_taps)
             all_bitstream_sizes.append(_num_bits)
             all_modulation_types.append(_modulation_type)
@@ -408,27 +412,93 @@ def generate_data(
             else:
                 # Random filter characteristics (None)
                 all_sps_rates.append(-1)
-                all_window_types.append(-1)
+                all_window_types.append("none")
 
                 # Known filter characteristics
                 all_bitrates.append(_bitrate)
                 all_sampling_rates.append(_sampling_rate)
                 all_roll_offs.append(_roll_off)
-                
-    if store:
-        pass
 
+    # Store data in tf.data.Dataset       
+    if store:
+        # Pad FIR filter taps to the maximum length
+        max_taps = 1024
+        all_filter_taps = [np.pad(taps, ((max_taps - len(taps)) // 2, (max_taps - len(taps)) - (max_taps - len(taps)) // 2), mode='constant') for taps in all_filter_taps]
+
+        with h5py.File(filepath, write_mode) as f:
+            # Define custom data types
+            vlen_arr_dtype = h5py.special_dtype(vlen=np.dtype('float32'))
+            string_dtype = h5py.special_dtype(vlen=str)  
+
+            # Input: variable-length IQ signal
+            f.create_dataset('signals', (len(all_signals),), dtype=vlen_arr_dtype, data=all_signals)
+
+            # Output: same-length FIR filter taps
+            f.create_dataset('filter_taps', data=np.array(all_filter_taps, dtype=np.float32))
+
+            # Shared Auxilary characteristics
+            f.create_dataset("bitstream_sizes", data=np.array(all_bitstream_sizes), dtype='int32')
+            f.create_dataset("modulation_types", data=all_modulation_types, dtype=string_dtype)
+            f.create_dataset("noise_levels", data=np.array(all_noise_levels), dtype='float32')
+            f.create_dataset("filter_names", data=all_filter_names, dtype=string_dtype)
+
+            # Known filter Auxilary characteristics
+            f.create_dataset("bitrates", data=np.array(all_bitrates), dtype='int32')
+            f.create_dataset("sampling_rates", data=np.array(all_sampling_rates), dtype='int32')
+            f.create_dataset("roll_offs", data=np.array(all_roll_offs), dtype='float32')
+
+            # Random filter Auxilary characteristics
+            f.create_dataset("sps_rates", data=np.array(all_sps_rates), dtype='int32')
+            f.create_dataset("window_types", data=all_window_types, dtype=string_dtype)
+
+        print(f"Data stored in {filepath}")
+        
 if __name__ == "__main__":
     # Visualization
     generate_data(
-        dataset_size=10,
+        dataset_size=7000,
         num_bits=None,
-        modulation_type=None,
+        modulation_type="8PSK",
+        ratio=1, 
+        known_filter=None,
+        sps=None,
+        window_type=None,
+        noise_level=0.00,
+        plot=False,
+        store=True,
+        verbose=False,
+        write_mode='a',
+        filepath="src/data/dataset_1a_train.h5",
+    )
+
+    generate_data(
+        dataset_size=2000,
+        num_bits=None,
+        modulation_type="8PSK",
         ratio=0.25, 
         known_filter=None,
         sps=None,
         window_type=None,
-        noise_level=None,
-        plot=True,
-        store=False,
+        noise_level=0.00,
+        plot=False,
+        store=True,
+        verbose=False,
+        write_mode='a',
+        filepath="src/data/dataset_1a_val.h5",
+    )
+    
+    generate_data(
+        dataset_size=1000,
+        num_bits=None,
+        modulation_type="8PSK",
+        ratio=0.25, 
+        known_filter=None,
+        sps=None,
+        window_type=None,
+        noise_level=0.00,
+        plot=False,
+        store=True,
+        verbose=False,
+        write_mode='a',
+        filepath="src/data/dataset_1a_test.h5",
     )
