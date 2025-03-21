@@ -4,6 +4,9 @@
 #              upsampling, pulse shaping via FIR filters, and the addition of noise. The generated data is in IQ format (In-phase 
 #              and Quadrature), which is commonly used in digital communication systems for representing complex signals.
 #
+# TODO: Implement append mode for storing data in HDF5 format: adds to an existing file rather than 'w'.
+#       Allows for the generation of data in batches to avoid memory issues.
+
 # Imports
 import h5py
 import modulation
@@ -284,6 +287,8 @@ def generate_data(
         noise_level: float=None,
         plot=False, 
         store=False,
+        verbose=True,
+        write_mode='w',
         filepath: str=DEFAULT_FILEPATH,
         ) -> None:
     """
@@ -301,6 +306,9 @@ def generate_data(
     - noise_level (float): Noise level. If None, a random noise level is chosen.
     - plot (bool): Whether to plot the generated data.
     - store (bool): Whether to store the generated data in HDF5 format.
+    - verbose (bool): Whether to print the signal characteristics.
+    - write_mode (str): Write mode for storing data in HDF5 format.
+    - filepath (str): Path to store the generated data.
 
     Returns
     ----------
@@ -346,13 +354,14 @@ def generate_data(
         _signal, _noise_level = apply_noise(signal=_filtered_signal, noise_level=noise_level)
 
         # Print signal characteristics
-        print(f"Bitstream Size: {_num_bits}, Modulation: {_modulation_type}, Filter Type: {_filter_name}, Noise Level: {_noise_level:.2f}, Num Taps: {len(_filter_taps)}")
+        if verbose:
+            print(f"Bitstream Size: {_num_bits}, Modulation: {_modulation_type}, Filter Type: {_filter_name}, Noise Level: {_noise_level:.2f}, Num Taps: {len(_filter_taps)}")
 
-        if _filter_name == "RANDOM":
-            print(f"Samples per Symbol: {_sps}, Window Type: {_window_type}")
+            if _filter_name == "RANDOM":
+                print(f"Samples per Symbol: {_sps}, Window Type: {_window_type}")
 
-        else:
-            print(f"Bit Rate: {_bitrate}, Sampling Rate: {_sampling_rate}, Roll-off Factor: {_roll_off}")
+            else:
+                print(f"Bit Rate: {_bitrate}, Sampling Rate: {_sampling_rate}, Roll-off Factor: {_roll_off}")
 
         if plot:
             # Plot I and Q components and FIR filter taps
@@ -416,7 +425,7 @@ def generate_data(
         max_taps = 1024
         all_filter_taps = [np.pad(taps, ((max_taps - len(taps)) // 2, (max_taps - len(taps)) - (max_taps - len(taps)) // 2), mode='constant') for taps in all_filter_taps]
 
-        with h5py.File(filepath, 'w') as f:
+        with h5py.File(filepath, write_mode) as f:
             # Define custom data types
             vlen_arr_dtype = h5py.special_dtype(vlen=np.dtype('float32'))
             string_dtype = h5py.special_dtype(vlen=str)  
@@ -447,15 +456,49 @@ def generate_data(
 if __name__ == "__main__":
     # Visualization
     generate_data(
-        dataset_size=100,
+        dataset_size=7000,
         num_bits=None,
-        modulation_type=None,
-        ratio=0.5, 
+        modulation_type="8PSK",
+        ratio=1, 
         known_filter=None,
         sps=None,
         window_type=None,
-        noise_level=None,
+        noise_level=0.00,
         plot=False,
         store=True,
-        filepath="src/data/dataset.h5",
+        verbose=False,
+        write_mode='a',
+        filepath="src/data/dataset_1a_train.h5",
+    )
+
+    generate_data(
+        dataset_size=2000,
+        num_bits=None,
+        modulation_type="8PSK",
+        ratio=0.25, 
+        known_filter=None,
+        sps=None,
+        window_type=None,
+        noise_level=0.00,
+        plot=False,
+        store=True,
+        verbose=False,
+        write_mode='a',
+        filepath="src/data/dataset_1a_val.h5",
+    )
+    
+    generate_data(
+        dataset_size=1000,
+        num_bits=None,
+        modulation_type="8PSK",
+        ratio=0.25, 
+        known_filter=None,
+        sps=None,
+        window_type=None,
+        noise_level=0.00,
+        plot=False,
+        store=True,
+        verbose=False,
+        write_mode='a',
+        filepath="src/data/dataset_1a_test.h5",
     )

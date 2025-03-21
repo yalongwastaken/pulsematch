@@ -25,6 +25,7 @@ class DataLoader():
     all_modulation_types = []
     all_noise_levels = []
     all_filter_names = []
+    all_signal_lengths = []
 
     # Known filter characteristics
     all_bitrates = []
@@ -60,6 +61,7 @@ class DataLoader():
             self.all_modulation_types = f['modulation_types'][:]
             self.all_noise_levels = f['noise_levels'][:]
             self.all_filter_names = f['filter_names'][:]
+            self.all_signal_lengths = [len(sig) for sig in self.all_signals]
 
             # Process known filter characteristics
             self.all_bitrates = f['bitrates'][:]
@@ -87,7 +89,7 @@ class DataLoader():
 
         # Create a generator function to yield the data
         def generator():
-            for sig, filter_taps, bitstream_size, modulation_type, noise_level, filter_name, bitrate, sampling_rate, roll_off, sps_rate, window_type in zip(
+            for sig, filter_taps, bitstream_size, modulation_type, noise_level, filter_name, signal_length, bitrate, sampling_rate, roll_off, sps_rate, window_type in zip(
                 # Main I/O
                 self.all_signals, 
                 self.all_filter_taps, 
@@ -97,6 +99,7 @@ class DataLoader():
                 self.all_modulation_types, 
                 self.all_noise_levels, 
                 self.all_filter_names,
+                self.all_signal_lengths,
 
                 # Known filter characteristics
                 self.all_bitrates, 
@@ -107,7 +110,7 @@ class DataLoader():
                 self.all_sps_rates, 
                 self.all_window_types
             ):
-                yield sig, filter_taps, bitstream_size, modulation_type, noise_level, filter_name, bitrate, sampling_rate, roll_off, sps_rate, window_type
+                yield sig, filter_taps, bitstream_size, modulation_type, noise_level, filter_name, signal_length, bitrate, sampling_rate, roll_off, sps_rate, window_type
         
         # Create the dataset from the generator
         self.dataset = tf.data.Dataset.from_generator(
@@ -119,14 +122,15 @@ class DataLoader():
                 tf.TensorSpec(shape=(), dtype=tf.string),
                 tf.TensorSpec(shape=(), dtype=tf.float32),
                 tf.TensorSpec(shape=(), dtype=tf.string),
+                tf.TensorSpec(shape=(), dtype=tf.int32),
                 tf.TensorSpec(shape=(), dtype=tf.float32),
                 tf.TensorSpec(shape=(), dtype=tf.float32),
                 tf.TensorSpec(shape=(), dtype=tf.float32),
                 tf.TensorSpec(shape=(), dtype=tf.float32),
                 tf.TensorSpec(shape=(), dtype=tf.string)
             )
-        )
-        
+        ).prefetch(tf.data.AUTOTUNE)
+
         # Bucket the dataset by signal length
         self.dataset = self.dataset.bucket_by_sequence_length(
             element_length_func=lambda *args: tf.shape(args[0])[0],
@@ -135,6 +139,7 @@ class DataLoader():
             padded_shapes=(
                 tf.TensorShape([None, 2]),
                 tf.TensorShape([None]),
+                tf.TensorShape([]),
                 tf.TensorShape([]),
                 tf.TensorShape([]),
                 tf.TensorShape([]),
@@ -194,14 +199,32 @@ class DataLoader():
         -------
         - None
         """
+        # Loop through batches
         for batch in self.dataset.take(samples_per_batch):
-            signals, _, _, _, _, _, _, _, _, _, _ = batch
-            for signal in signals:
-                signal = signal.numpy()
+            signals, fir_filters, _, modulation_types, noise_levels, _, signal_length, _, _, _, _, _ = batch
+
+            # Loop through samples in batch
+            for sample in range(len(signals)):
+                # Preprocess for plotting
+                signal = signals[sample].numpy()
+                fir_filter = fir_filters[sample].numpy()
+
+                plt.figure(figsize=(10, 6))
+
+                plt.subplot(3, 1, 1)
                 plt.plot(signal[:, 0], label="Real Part")
-                plt.plot(signal[:, 1], label="Imaginary Part")
-                plt.legend()
                 plt.title("Signal for First Sample")
+
+                plt.subplot(3, 1, 2)
+                plt.plot(signal[:, 1], label="Imaginary Part")
+                plt.title("Signal for First Sample")
+
+                plt.subplot(3, 1, 3)
+                plt.plot(fir_filter, label="FIR Filter Taps")
+                plt.title("FIR Filter Taps for First Sample")
+
+                plt.suptitle(f"Modulation: {modulation_types[sample].numpy().decode()}, Noise Level: {noise_levels[sample].numpy():.2f}, Signal Length: {signal_length[sample].numpy()}, Bucket Length: {len(signal)}")
+                plt.tight_layout()
                 plt.show()
                 
     def get_dataset(self) -> tf.data.Dataset:
@@ -219,7 +242,7 @@ class DataLoader():
         return self.dataset
 
 if __name__ == "__main__":
-    dataloader = DataLoader()
+    dataloader = DataLoader("src/data/dataset_1a_train.h5")
     dataloader.create_tf_dataset()
     dataset = dataloader.get_dataset()
     dataloader.plot_batch()
