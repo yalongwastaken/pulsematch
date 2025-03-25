@@ -39,7 +39,7 @@ class DataLoader():
     # Dataset
     dataset = None
 
-    def __init__(self, file_path: str=FILE_PATH) -> None:
+    def load_h5_dataset(self, file_path: str=FILE_PATH) -> None:
         """
         Load the dataset from the file path and store the data in the class `list` variables.
 
@@ -187,7 +187,7 @@ class DataLoader():
             plt.show()
             plt.close()
     
-    def plot_batch(self, samples_per_batch: int=4) -> None:
+    def plot_batch(self, dataset=None, samples_per_batch: int=4) -> None:
         """
         Plot `samples_per_batch` number of samples from each batch in the dataset.
 
@@ -199,8 +199,11 @@ class DataLoader():
         -------
         - None
         """
+        if dataset is None:
+            dataset = self.dataset
+
         # Loop through batches
-        for batch in self.dataset.take(samples_per_batch):
+        for batch in dataset.take(samples_per_batch):
             signals, fir_filters, _, modulation_types, noise_levels, _, signal_length, _, _, _, _, _ = batch
 
             # Loop through samples in batch
@@ -240,9 +243,41 @@ class DataLoader():
         - tf.data.Dataset: The dataset.
         """
         return self.dataset
+    
+    def reset(self) -> None:
+        """
+        Reset the DataLoader.
+
+        Parameters
+        ----------
+        - None
+
+        Returns
+        -------
+        - None
+        """
+        self.all_signals = []
+        self.all_filter_taps = []
+
+        self.all_bitstream_sizes = []
+        self.all_modulation_types = []
+        self.all_noise_levels = []
+        self.all_filter_names = []
+        self.all_signal_lengths = []
+
+        self.all_bitrates = []
+        self.all_sampling_rates = []
+        self.all_roll_offs = []
+
+        self.all_sps_rates = []
+        self.all_window_types = []
+
+        self.dataset = None
 
 if __name__ == "__main__":
-    dataloader = DataLoader("src/data/dataset_1a_train.h5")
+    dataloader = DataLoader()
+
+    dataloader.load_h5_dataset("src/data/dataset_1a_test.h5")
     dataloader.create_tf_dataset()
     dataset = dataloader.get_dataset()
     dataloader.plot_batch()
