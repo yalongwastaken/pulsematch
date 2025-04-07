@@ -229,6 +229,36 @@ class DataLoader():
                 plt.suptitle(f"Modulation: {modulation_types[sample].numpy().decode()}, Noise Level: {noise_levels[sample].numpy():.2f}, Signal Length: {signal_length[sample].numpy()}, Bucket Length: {len(signal)}")
                 plt.tight_layout()
                 plt.show()
+
+    def plot_prediction(self, input: np.ndarray, predictions: np.ndarray, ground_truth: np.ndarray) -> None:
+        """
+        Plot the predictions and ground truth for a given batch of data.
+
+        Parameters
+        ----------
+        - input (np.ndarray): The input data for the model.
+        - predictions (np.ndarray): The predicted values.
+        - ground_truth (np.ndarray): The ground truth values.
+
+        Returns
+        -------
+        - None
+        """
+        plt.figure(figsize=(10, 6))
+        plt.subplot(2, 1, 1)
+        plt.plot(input[:, 0], label='Input I Component', color='green')
+        plt.plot(input[:, 1], label='Input Q Component', color='red')
+        plt.title('Input Signal')
+        plt.legend()
+        plt.grid(True)
+        
+        plt.subplot(2, 1, 2)
+        plt.plot(predictions, label='Predictions', color='orange')
+        plt.plot(ground_truth, label='Ground Truth', color='blue')
+        plt.title('Predictions vs Ground Truth')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
                 
     def get_dataset(self) -> tf.data.Dataset:
         """

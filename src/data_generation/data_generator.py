@@ -3,9 +3,6 @@
 #              used in digital communication systems. The process involves the generation of a random bitstream, modulation,
 #              upsampling, pulse shaping via FIR filters, and the addition of noise. The generated data is in IQ format (In-phase 
 #              and Quadrature), which is commonly used in digital communication systems for representing complex signals.
-#
-# TODO: Implement append mode for storing data in HDF5 format: adds to an existing file rather than 'w'.
-#       Allows for the generation of data in batches to avoid memory issues.
 
 # Imports
 import h5py
@@ -20,6 +17,7 @@ DEFAULT_FILEPATH = "src/data/dataset.h5"
 DATASET_SIZE = 1000000
 BITSTREAM_SIZE_MIN = 1024
 BITSTREAM_SIZE_MAX = 65536
+NUM_FIR_TAPS = None
 
 modulation_types = [
     "BPSK",
@@ -123,7 +121,7 @@ def apply_modulation(bitstream: np.ndarray, modulation_type: str=None) -> Tuple[
 
     return modulated_signal, modulation_type
 
-def generate_known_filter(modulation_type: str, known_filter: str=None) -> Tuple[np.ndarray, str]:
+def generate_known_filter(modulation_type: str, known_filter: str=None, num_taps: int=NUM_FIR_TAPS) -> Tuple[np.ndarray, str]:
     """
     Generate a known FIR filter (RRC, RC, etc.).
     
@@ -142,22 +140,22 @@ def generate_known_filter(modulation_type: str, known_filter: str=None) -> Tuple
 
     # Root Raised Cosine (RRC) filter
     if known_filter == "RRC":
-        rrc_filter, symbol_rate, sampling_rate, roll_off = common_filters.rrc(modulation_type)
+        rrc_filter, symbol_rate, sampling_rate, roll_off = common_filters.rrc(modulation_type, num_taps)
         return rrc_filter, symbol_rate, sampling_rate, roll_off, "RRC"
     
     # Raised Cosine (RC) filter
     elif known_filter == "RC":
-        rc_filter, symbol_rate, sampling_rate, roll_off = common_filters.rc(modulation_type)
+        rc_filter, symbol_rate, sampling_rate, roll_off = common_filters.rc(modulation_type, num_taps)
         return rc_filter, symbol_rate, sampling_rate, roll_off, "RC"
     
     # Gaussian filter
     elif known_filter == "Gaussian":
-        gaussian_filter, symbol_rate, sampling_rate, roll_off = common_filters.gaussian(modulation_type)
+        gaussian_filter, symbol_rate, sampling_rate, roll_off = common_filters.gaussian(modulation_type, num_taps)
         return gaussian_filter, symbol_rate, sampling_rate, roll_off, "GAUSSIAN"
     
     # Sinc filter
     elif known_filter == "Sinc":
-        sinc_filter, symbol_rate, sampling_rate, roll_off = common_filters.sinc(modulation_type)
+        sinc_filter, symbol_rate, sampling_rate, roll_off = common_filters.sinc(modulation_type, num_taps)
         return sinc_filter, symbol_rate, sampling_rate, roll_off, "SINC"
 
 
@@ -183,7 +181,7 @@ def apply_upsampling(signal: np.ndarray, sps: int=None) -> Tuple[np.ndarray, int
 
     return signal, sps
 
-def generate_random_filter(sps: int=None, window_type: str=None) -> Tuple[np.ndarray, str]:
+def generate_random_filter(sps: int=None, window_type: str=None, num_taps: int=NUM_FIR_TAPS) -> Tuple[np.ndarray, str]:
     """
     Generate a random FIR filter.
     
@@ -201,7 +199,8 @@ def generate_random_filter(sps: int=None, window_type: str=None) -> Tuple[np.nda
     multipliers = np.arange(4, 10, 1)
 
     # Determine the number of taps based on the symbol rate (SPS)
-    num_taps = sps * np.random.choice(multipliers)
+    if num_taps is None:
+        num_taps = sps * np.random.choice(multipliers)
 
     filter_taps = np.random.uniform(-1, 1, num_taps)
 

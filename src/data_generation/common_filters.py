@@ -49,7 +49,7 @@ modulation_types = {
     "64QAM": 6,
 }
 
-def rrc(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float]:
+def rrc(modulation_type: str=None, num_taps: int=None) -> Tuple[np.ndarray, float, float, float]:
     """
     Generate a root raised cosine filter.
     
@@ -78,7 +78,8 @@ def rrc(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float]:
     roll_off = np.random.uniform(0, 1)
 
     # Number of taps
-    num_taps = int(sampling_rate * symbol_period) * np.random.randint(4, 10)
+    if num_taps is None:
+        num_taps = int(sampling_rate * symbol_period) * np.random.randint(4, 10)
 
     # Generate the RRC filter using commpy
     rrc_filter = cp.rrcosfilter(num_taps, roll_off, symbol_period, sampling_rate)[1] 
@@ -88,7 +89,7 @@ def rrc(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float]:
 
     return rrc_filter, bitrate, sampling_rate, roll_off
 
-def rc(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float]:
+def rc(modulation_type: str=None, num_taps: int=None) -> Tuple[np.ndarray, float, float, float]:
     """
     Generate a raised cosine filter.
     
@@ -117,7 +118,8 @@ def rc(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float]:
     roll_off = np.random.uniform(0, 1)
 
     # Number of taps
-    num_taps = int(sampling_rate * symbol_period) * np.random.randint(4, 10)
+    if num_taps is None:
+        num_taps = int(sampling_rate * symbol_period) * np.random.randint(4, 10)
 
     # Generate the RC filter using commpy
     rc_filter = cp.rcosfilter(num_taps, roll_off, symbol_period, sampling_rate)[1]
@@ -127,7 +129,7 @@ def rc(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float]:
 
     return rc_filter, bitrate, sampling_rate, roll_off
 
-def gaussian(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float]:
+def gaussian(modulation_type: str=None, num_taps: int=None) -> Tuple[np.ndarray, float, float, float]:
     """
     Generate a Gaussian filter.
     
@@ -156,7 +158,8 @@ def gaussian(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float
     roll_off = np.random.uniform(0, 1)
 
     # Number of taps
-    num_taps = int(sampling_rate * symbol_period) * np.random.randint(4, 10)
+    if num_taps is None:
+        num_taps = int(sampling_rate * symbol_period) * np.random.randint(4, 10)
 
     # Generate the Gaussian filter using commpy
     gaussian_filter = cp.gaussianfilter(num_taps, roll_off, symbol_period, sampling_rate)[1]
@@ -166,7 +169,7 @@ def gaussian(modulation_type: str=None) -> Tuple[np.ndarray, float, float, float
 
     return gaussian_filter, bitrate, sampling_rate, roll_off
 
-def sinc(modulation_type: str=None) -> np.ndarray:
+def sinc(modulation_type: str=None, num_taps: int=None) -> np.ndarray:
     """
     Generate a sinc filter.
     
@@ -195,7 +198,8 @@ def sinc(modulation_type: str=None) -> np.ndarray:
     roll_off = 0
 
     # Number of taps
-    num_taps = int(sampling_rate * symbol_period) * np.random.randint(4, 10)
+    if num_taps is None:
+        num_taps = int(sampling_rate * symbol_period) * np.random.randint(4, 10)
 
     # Generate the Sinc filter using commpy
     sinc_filter = cp.rcosfilter(num_taps, roll_off, symbol_period, sampling_rate)[1]
