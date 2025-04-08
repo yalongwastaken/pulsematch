@@ -36,7 +36,6 @@ sampling_rate_multiplier = [
     2,  # 2x Nyquist
     4,  # 4x Nyquist
     8,  # 8x Nyquist
-    16, # 16x Nyquist
 ]
 
 # Modulation types

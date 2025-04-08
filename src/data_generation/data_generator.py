@@ -28,11 +28,19 @@ modulation_types = [
     "64QAM",
 ]
 
-sps_rates = [
-    2,   # 2x Nyquist
-    4,   # 4x Nyquist
-    8,   # 8x Nyquist
-    16,  # 16x Nyquist
+modulation_types_dict = {
+    "BPSK": 1,
+    "QPSK": 2,
+    "8PSK": 3,
+    "16QAM": 4,
+    "32QAM": 5,
+    "64QAM": 6,
+}
+
+sampling_rate_multiplier = [
+    2,  # 2x Nyquist
+    4,  # 4x Nyquist
+    8,  # 8x Nyquist
 ]
 
 known_filters = [
@@ -159,29 +167,7 @@ def generate_known_filter(modulation_type: str, known_filter: str=None, num_taps
         return sinc_filter, symbol_rate, sampling_rate, roll_off, "SINC"
 
 
-def apply_upsampling(signal: np.ndarray, sps: int=None) -> Tuple[np.ndarray, int]:
-    """
-    Apply upsampling to the modulated signal.
-    
-    Parameters
-    ----------
-    - signal (np.ndarray): Input modulated signal.
-    - sps (int): Samples per symbol. If None, a random symbol rate is chosen.
-
-    Returns
-    ----------
-    - signal (np.ndarray): Upsampled signal.
-    - sps (int): Symbol rate used for upsampling.
-    """
-    if sps is None:
-        sps = np.random.choice(sps_rates)
-
-    # Upsample the signal by a random factor
-    signal = np.repeat(signal, sps, axis=0)
-
-    return signal, sps
-
-def generate_random_filter(sps: int=None, window_type: str=None, num_taps: int=NUM_FIR_TAPS) -> Tuple[np.ndarray, str]:
+def generate_random_filter(sps: int=None, modulation_type: str=None, window_type: str=None, num_taps: int=NUM_FIR_TAPS) -> Tuple[np.ndarray, str]:
     """
     Generate a random FIR filter.
     
@@ -195,12 +181,13 @@ def generate_random_filter(sps: int=None, window_type: str=None, num_taps: int=N
     - filter_taps (np.ndarray): Coefficients of the FIR filter.
     - filter_name (str): Name of the filter.
     """
-    # Define multipliers
-    multipliers = np.arange(4, 10, 1)
+    # Determine sps based on modulation type and sampling rate multipler
+    if sps is None:
+        sps = np.random.choice(sampling_rate_multiplier) * modulation_types_dict[modulation_type]
 
-    # Determine the number of taps based on the symbol rate (SPS)
+    # Determine the number of taps based on sps and modulation type
     if num_taps is None:
-        num_taps = sps * np.random.choice(multipliers)
+        num_taps = sps * np.random.randint(4, 10)
 
     filter_taps = np.random.uniform(-1, 1, num_taps)
 
@@ -340,12 +327,11 @@ def generate_data(
         # Apply modulation
         _modulated_signal, _modulation_type = apply_modulation(bitstream=_bitstream, modulation_type=modulation_type)
 
-        # Upsample and apply the pulse shaping filter
+        # apply the pulse shaping filter
         if np.random.rand() < ratio:
             _filter_taps, _bitrate, _sampling_rate, _roll_off, _filter_name = generate_known_filter(modulation_type=_modulation_type, known_filter=known_filter)
         else:
-            _modulated_signal, _sps = apply_upsampling(signal=_modulated_signal, sps=sps)
-            _filter_taps, _window_type, _filter_name = generate_random_filter(sps=_sps, window_type=window_type)
+            _filter_taps, _window_type, _filter_name = generate_random_filter(sps=None, modulation_type=_modulation_type, window_type=window_type)
 
         _filtered_signal = apply_filter(signal=_modulated_signal, filter_taps=_filter_taps)
 
@@ -421,7 +407,7 @@ def generate_data(
     # Store data in tf.data.Dataset       
     if store:
         # Pad FIR filter taps to the maximum length
-        max_taps = 1024
+        max_taps = 432
         all_filter_taps = [np.pad(taps, ((max_taps - len(taps)) // 2, (max_taps - len(taps)) - (max_taps - len(taps)) // 2), mode='constant') for taps in all_filter_taps]
 
         with h5py.File(filepath, write_mode) as f:
@@ -455,7 +441,7 @@ def generate_data(
 if __name__ == "__main__":
     # Visualization
     generate_data(
-        dataset_size=7000,
+        dataset_size=15000,
         num_bits=None,
         modulation_type="8PSK",
         ratio=1, 
@@ -467,37 +453,5 @@ if __name__ == "__main__":
         store=True,
         verbose=False,
         write_mode='a',
-        filepath="src/data/dataset_1a_train.h5",
-    )
-
-    generate_data(
-        dataset_size=2000,
-        num_bits=None,
-        modulation_type="8PSK",
-        ratio=0.25, 
-        known_filter=None,
-        sps=None,
-        window_type=None,
-        noise_level=0.00,
-        plot=False,
-        store=True,
-        verbose=False,
-        write_mode='a',
-        filepath="src/data/dataset_1a_val.h5",
-    )
-    
-    generate_data(
-        dataset_size=1000,
-        num_bits=None,
-        modulation_type="8PSK",
-        ratio=0.25, 
-        known_filter=None,
-        sps=None,
-        window_type=None,
-        noise_level=0.00,
-        plot=False,
-        store=True,
-        verbose=False,
-        write_mode='a',
-        filepath="src/data/dataset_1a_test.h5",
+        filepath="src/data/dataset_1a.h5",
     )
