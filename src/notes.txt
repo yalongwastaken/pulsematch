@@ -16,3 +16,11 @@ Note: When generating the filters, the known FIR filters (e.g., RRC, Sinc) do no
 or random windowing functions. Instead, they inherently incorporate randomness based on the randomly selected bitrate and
 sampling rate. Additionally, the ratio of completely random FIR filters to known FIR filters will be 0.75, meaning that 75% 
 of the filters will be entirely random, while the remaining 25% will be based on known filter designs.
+
+Data Description:
+1. 8PSK, known FIR filter, no noise
+2. 8PSK, random FIR filter, no noise
+3. 32QAM, known FIR filter, 0.10 noise
+4. random modulation, known FIR filter, 0.10 noise
+5. 32QAM, known fir filter, random noise
+6. random modulation, known fir filter, random noise

@@ -44,6 +44,7 @@ sampling_rate_multiplier = [
 ]
 
 known_filters = [
+    "Rectangular",
     "RRC",
     "RC",
     "Gaussian",
@@ -165,6 +166,11 @@ def generate_known_filter(modulation_type: str, known_filter: str=None, num_taps
     elif known_filter == "Sinc":
         sinc_filter, symbol_rate, sampling_rate, roll_off = common_filters.sinc(modulation_type, num_taps)
         return sinc_filter, symbol_rate, sampling_rate, roll_off, "SINC"
+    
+    # Rectangular filter
+    elif known_filter == "Rectangular":
+        rectangular_filter, symbol_rate, sampling_rate, roll_off = common_filters.rectangular(modulation_type, num_taps)
+        return rectangular_filter, symbol_rate, sampling_rate, roll_off, "RECTANGULAR"
 
 
 def generate_random_filter(sps: int=None, modulation_type: str=None, window_type: str=None, num_taps: int=NUM_FIR_TAPS) -> Tuple[np.ndarray, str]:
@@ -317,7 +323,6 @@ def generate_data(
         all_roll_offs = []
 
         # Random filter characteristics
-        all_sps_rates = []
         all_window_types = []
 
     for _ in range(dataset_size):
@@ -331,7 +336,7 @@ def generate_data(
         if np.random.rand() < ratio:
             _filter_taps, _bitrate, _sampling_rate, _roll_off, _filter_name = generate_known_filter(modulation_type=_modulation_type, known_filter=known_filter)
         else:
-            _filter_taps, _window_type, _filter_name = generate_random_filter(sps=None, modulation_type=_modulation_type, window_type=window_type)
+            _filter_taps, _window_type, _filter_name = generate_random_filter(sps=sps, modulation_type=_modulation_type, window_type=window_type)
 
         _filtered_signal = apply_filter(signal=_modulated_signal, filter_taps=_filter_taps)
 
@@ -343,7 +348,7 @@ def generate_data(
             print(f"Bitstream Size: {_num_bits}, Modulation: {_modulation_type}, Filter Type: {_filter_name}, Noise Level: {_noise_level:.2f}, Num Taps: {len(_filter_taps)}")
 
             if _filter_name == "RANDOM":
-                print(f"Samples per Symbol: {_sps}, Window Type: {_window_type}")
+                print(f"Window Type: {_window_type}")
 
             else:
                 print(f"Bit Rate: {_bitrate}, Sampling Rate: {_sampling_rate}, Roll-off Factor: {_roll_off}")
@@ -387,7 +392,6 @@ def generate_data(
 
             if _filter_name == "RANDOM":
                 # Random filter characteristics
-                all_sps_rates.append(_sps)
                 all_window_types.append(_window_type)
 
                 # Known filter characteristics (None)
@@ -396,7 +400,6 @@ def generate_data(
                 all_roll_offs.append(-1)
             else:
                 # Random filter characteristics (None)
-                all_sps_rates.append(-1)
                 all_window_types.append("none")
 
                 # Known filter characteristics
@@ -433,7 +436,6 @@ def generate_data(
             f.create_dataset("roll_offs", data=np.array(all_roll_offs), dtype='float32')
 
             # Random filter Auxilary characteristics
-            f.create_dataset("sps_rates", data=np.array(all_sps_rates), dtype='int32')
             f.create_dataset("window_types", data=all_window_types, dtype=string_dtype)
 
         print(f"Data stored in {filepath}")
@@ -443,15 +445,15 @@ if __name__ == "__main__":
     generate_data(
         dataset_size=15000,
         num_bits=None,
-        modulation_type="8PSK",
-        ratio=1, 
+        modulation_type="32QAM",
+        ratio=1.0, 
         known_filter=None,
         sps=None,
         window_type=None,
-        noise_level=0.00,
+        noise_level=0.10,
         plot=False,
         store=True,
         verbose=False,
-        write_mode='a',
-        filepath="src/data/dataset_1a.h5",
+        write_mode='w',
+        filepath="src/data/dataset_3c.h5",
     )
