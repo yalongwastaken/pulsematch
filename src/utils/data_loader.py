@@ -33,7 +33,6 @@ class DataLoader():
     all_roll_offs = []
 
     # Random filter characteristics
-    all_sps_rates = []
     all_window_types = []
 
     # Dataset
@@ -69,7 +68,6 @@ class DataLoader():
             self.all_roll_offs = f['roll_offs'][:]
 
             # Process random filter characteristics
-            self.all_sps_rates = f['sps_rates'][:]
             self.all_window_types = f['window_types'][:]
 
 
@@ -89,7 +87,7 @@ class DataLoader():
 
         # Create a generator function to yield the data
         def generator():
-            for sig, filter_taps, bitstream_size, modulation_type, noise_level, filter_name, signal_length, bitrate, sampling_rate, roll_off, sps_rate, window_type in zip(
+            for sig, filter_taps, bitstream_size, modulation_type, noise_level, filter_name, signal_length, bitrate, sampling_rate, roll_off, window_type in zip(
                 # Main I/O
                 self.all_signals, 
                 self.all_filter_taps, 
@@ -107,10 +105,9 @@ class DataLoader():
                 self.all_roll_offs, 
 
                 # Random filter characteristics
-                self.all_sps_rates, 
                 self.all_window_types
             ):
-                yield sig, filter_taps, bitstream_size, modulation_type, noise_level, filter_name, signal_length, bitrate, sampling_rate, roll_off, sps_rate, window_type
+                yield sig, filter_taps, bitstream_size, modulation_type, noise_level, filter_name, signal_length, bitrate, sampling_rate, roll_off, window_type
         
         # Create the dataset from the generator
         self.dataset = tf.data.Dataset.from_generator(
@@ -126,7 +123,6 @@ class DataLoader():
                 tf.TensorSpec(shape=(), dtype=tf.float32),
                 tf.TensorSpec(shape=(), dtype=tf.float32),
                 tf.TensorSpec(shape=(), dtype=tf.float32),
-                tf.TensorSpec(shape=(), dtype=tf.float32),
                 tf.TensorSpec(shape=(), dtype=tf.string)
             )
         ).prefetch(tf.data.AUTOTUNE)
@@ -139,7 +135,6 @@ class DataLoader():
             padded_shapes=(
                 tf.TensorShape([None, 2]),
                 tf.TensorShape([None]),
-                tf.TensorShape([]),
                 tf.TensorShape([]),
                 tf.TensorShape([]),
                 tf.TensorShape([]),
@@ -204,7 +199,7 @@ class DataLoader():
 
         # Loop through batches
         for batch in dataset.take(samples_per_batch):
-            signals, fir_filters, _, modulation_types, noise_levels, _, signal_length, _, _, _, _, _ = batch
+            signals, fir_filters, _, modulation_types, noise_levels, _, signal_length, _, _, _, _ = batch
 
             # Loop through samples in batch
             for sample in range(len(signals)):
@@ -299,7 +294,6 @@ class DataLoader():
         self.all_sampling_rates = []
         self.all_roll_offs = []
 
-        self.all_sps_rates = []
         self.all_window_types = []
 
         self.dataset = None
@@ -307,7 +301,7 @@ class DataLoader():
 if __name__ == "__main__":
     dataloader = DataLoader()
 
-    dataloader.load_h5_dataset("src/data/dataset_1a_test.h5")
+    dataloader.load_h5_dataset("src/data/dataset_3c.h5")
     dataloader.create_tf_dataset()
     dataset = dataloader.get_dataset()
     dataloader.plot_batch()

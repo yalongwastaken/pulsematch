@@ -48,6 +48,47 @@ modulation_types = {
     "64QAM": 6,
 }
 
+def rectangular(modulation_type: str=None, num_taps: int=None) -> Tuple[np.ndarray, float, float, float]:
+    """
+    Generate a rectangular filter.
+
+    Parameters
+    ----------
+    - modulation_type (str): The modulation type (e.g., "BPSK", "QPSK", etc.)
+    - num_taps (int): The number of taps for the filter.
+
+    Returns
+    -------
+    - rectangular_filter (np.ndarray): The generated rectangular filter.
+    - symbol_rate (float): The symbol rate.
+    - sampling_rate (float): The sampling rate.
+    - roll_off (float): The roll-off factor.
+    """
+    # Ranom sampling rate and bitrate
+    bitrate = np.random.choice(bitrates)
+    sampling_rate = np.random.choice(sampling_rate_multiplier) * bitrate
+
+    # Determine symbol rate
+    symbol_rate = bitrate / modulation_types[modulation_type]
+
+    # Determine symbol period
+    symbol_period = 1 / symbol_rate
+
+    # Random roll-off factor
+    roll_off = 0
+
+    # Number of taps
+    if num_taps is None:
+        num_taps = int(sampling_rate * symbol_period) * np.random.randint(4, 10)
+
+    # Generate the rectangular filter
+    rectangular_filter = np.ones(num_taps)
+
+    # Normalize the filter energy to 1
+    rectangular_filter /= np.sqrt(np.sum(rectangular_filter**2))
+
+    return rectangular_filter, bitrate, sampling_rate, roll_off
+
 def rrc(modulation_type: str=None, num_taps: int=None) -> Tuple[np.ndarray, float, float, float]:
     """
     Generate a root raised cosine filter.
@@ -55,6 +96,7 @@ def rrc(modulation_type: str=None, num_taps: int=None) -> Tuple[np.ndarray, floa
     Parameters
     ----------
     - modulation_type (str): The modulation type (e.g., "BPSK", "QPSK", etc.)
+    - num_taps (int): The number of taps for the filter.
 
     Returns
     -------
@@ -95,6 +137,7 @@ def rc(modulation_type: str=None, num_taps: int=None) -> Tuple[np.ndarray, float
     Parameters
     ----------
     - modulation_type (str): The modulation type (e.g., "BPSK", "QPSK", etc.)
+    - num_taps (int): The number of taps for the filter.
 
     Returns
     -------
@@ -135,6 +178,7 @@ def gaussian(modulation_type: str=None, num_taps: int=None) -> Tuple[np.ndarray,
     Parameters
     ----------
     - modulation_type (str): The modulation type (e.g., "BPSK", "QPSK", etc.)
+    - num_taps (int): The number of taps for the filter.
 
     Returns
     -------
@@ -175,6 +219,7 @@ def sinc(modulation_type: str=None, num_taps: int=None) -> np.ndarray:
     Parameters
     ----------
     - modulation_type (str): The modulation type (e.g., "BPSK", "QPSK", etc.)
+    - num_taps (int): The number of taps for the filter.
 
     Returns
     -------
@@ -210,8 +255,17 @@ def sinc(modulation_type: str=None, num_taps: int=None) -> np.ndarray:
 
 
 if __name__ == "__main__":
+    # Test rectangular filter
+    rectangular_filter, _, _, _ = rectangular("BPSK")
+    plt.plot(rectangular_filter)
+    plt.title("Rectangular Filter")
+    plt.xlabel("Samples")
+    plt.ylabel("Amplitude")
+    plt.grid()
+    plt.show()
+
     # Test RRC filter
-    rrc_filter = rrc("BPSK")
+    rrc_filter, _, _, _ = rrc("BPSK")
     plt.plot(rrc_filter)
     plt.title("Root Raised Cosine Filter")
     plt.xlabel("Samples")
@@ -220,7 +274,7 @@ if __name__ == "__main__":
     plt.show()
 
     # Test RC filter
-    rc_filter = rc("BPSK")
+    rc_filter, _, _, _ = rc("BPSK")
     plt.plot(rc_filter)
     plt.title("Raised Cosine Filter")
     plt.xlabel("Samples")
@@ -229,7 +283,7 @@ if __name__ == "__main__":
     plt.show()
 
     # Test Gaussian filter
-    gaussian_filter = gaussian("BPSK")
+    gaussian_filter, _, _, _ = gaussian("BPSK")
     plt.plot(gaussian_filter)
     plt.title("Gaussian Filter")
     plt.xlabel("Samples")
@@ -238,7 +292,7 @@ if __name__ == "__main__":
     plt.show()
 
     # Test Sinc filter
-    sinc_filter = sinc("BPSK")
+    sinc_filter, _, _, _ = sinc("BPSK")
     plt.plot(sinc_filter)
     plt.title("Sinc Filter")
     plt.xlabel("Samples")
