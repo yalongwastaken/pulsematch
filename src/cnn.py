@@ -259,25 +259,53 @@ print(f"Weighted MSE Loss: {weighted_mse_loss}")
 raw_mse_loss = tf.reduce_mean(tf.square(dataset_test_y - predictions))
 print(f"Raw MSE Loss: {raw_mse_loss}")
 
-# Threshold accuracy percentage graph (from 0.10 to 0.00)
+# Thresholds
 thresholds = np.linspace(0.10, 0, num=21)
-threshold_accuracies = []
 
-# Determine accuracies
+# Prepare arrays to store accuracies
+original_accuracies = []
+weighted_accuracies = []
+nonzero_accuracies = []
+
+# Errors and weights
+errors = tf.abs(dataset_test_y - predictions)
+weights = tf.abs(dataset_test_y)
+
+# Original accuracy (unweighted, on all taps)
 for threshold in thresholds:
-    threshold_accuracy = tf.reduce_mean(tf.cast(tf.abs(dataset_test_y - predictions) < threshold, tf.float32))*100
-    threshold_accuracies.append(threshold_accuracy.numpy())
+  correct = tf.cast(errors < threshold, tf.float32)
+  acc = tf.reduce_mean(correct) * 100
+  original_accuracies.append(acc.numpy())
 
-# Plot
+# Weighted accuracy
+for threshold in thresholds:
+  correct = tf.cast(errors < threshold, tf.float32)
+  weighted_correct = correct * weights
+  weighted_total = weights + 1e-8  # to prevent divide-by-zero
+  acc = tf.reduce_sum(weighted_correct) / tf.reduce_sum(weighted_total) * 100
+  weighted_accuracies.append(acc.numpy())
+
+# Non-zero tap accuracy
+non_zero_mask = tf.not_equal(dataset_test_y, 0.0)
+filtered_errors = tf.boolean_mask(errors, non_zero_mask)
+
+for threshold in thresholds:
+  correct = tf.cast(filtered_errors < threshold, tf.float32)
+  acc = tf.reduce_mean(correct) * 100
+  nonzero_accuracies.append(acc.numpy())
+
+# Plotting
 plt.figure(figsize=(10, 6))
-plt.plot(thresholds, threshold_accuracies, marker='o', linestyle='-', color='b', markersize=8, label='Accuracy')
+plt.plot(thresholds, original_accuracies, marker='o', label='Original Accuracy')
+plt.plot(thresholds, weighted_accuracies, marker='s', label='Weighted Accuracy')
+plt.plot(thresholds, nonzero_accuracies, marker='^', label='Non-zero Tap Accuracy')
+
 plt.xlabel('Threshold', fontsize=12)
 plt.ylabel('Threshold Accuracy Percentage (%)', fontsize=12)
 plt.title('Threshold Accuracy Percentage vs. Threshold', fontsize=14)
 plt.gca().invert_xaxis()
-plt.xticks(np.arange(0.10, -0.01, -0.005), fontsize=10)
-plt.xticks(rotation=-45)
-plt.grid(True, which='both', linestyle='--', linewidth=0.7)
-plt.legend(loc='upper right')
+plt.xticks(np.round(np.arange(0.10, -0.001, -0.01), 3), fontsize=10, rotation=-45)
+plt.grid(True, linestyle='--', linewidth=0.7)
+plt.legend(loc='lower left')
 plt.tight_layout()
 plt.show()
