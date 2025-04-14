@@ -445,7 +445,7 @@ if __name__ == "__main__":
     generate_data(
         dataset_size=15000,
         num_bits=None,
-        modulation_type="32QAM",
+        modulation_type=None,
         ratio=1.0, 
         known_filter=None,
         sps=None,
@@ -455,5 +455,5 @@ if __name__ == "__main__":
         store=True,
         verbose=False,
         write_mode='w',
-        filepath="src/data/dataset_3c.h5",
+        filepath="src/data/dataset_6c.h5",
     )

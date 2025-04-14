@@ -1,26 +1,9 @@
-Workflow: 
-    1. Generate and train based on basic configurations like a known modulation scheme (e.g., BPSK) and
-    set noise level.
-        Random bitstream, 8PSK, random/known FIR filter, no noise.
-        Random bitstream, 8PSK, random/known FIR filter, low noise.
-        Random bitstream, 32QAM, random/known FIR filter, low noise.
-
-    2. Increase complexity incrementally by introducing randomness.
-        Random bitstream, random modulation, random/known FIR filter, low noise.
-        Random bitstream, known modulation, random/known FIR filter, random noise.
-
-    3. Total randomness:
-        Random bitstream, random modulation, random/known FIR filter, random noise.
-
-Note: When generating the filters, the known FIR filters (e.g., RRC, Sinc) do not rely on random SPS (samples per symbol)
-or random windowing functions. Instead, they inherently incorporate randomness based on the randomly selected bitrate and
-sampling rate. Additionally, the ratio of completely random FIR filters to known FIR filters will be 0.75, meaning that 75% 
-of the filters will be entirely random, while the remaining 25% will be based on known filter designs.
-
-Data Description:
-1. 8PSK, known FIR filter, no noise
-2. 8PSK, random FIR filter, no noise
-3. 32QAM, known FIR filter, 0.10 noise
-4. random modulation, known FIR filter, 0.10 noise
-5. 32QAM, known fir filter, random noise
-6. random modulation, known fir filter, random noise
+Training/Model Examination Workflow:
+    1. 8PSK, known FIR filter, no noise
+    2. 8PSK, random FIR filter, no noise
+    3. 32QAM, known FIR filter, 0.10 noise
+    4. 32QAM, SINC & RC & RRC filters, 0.10 noise
+    5. 32QAM, RECTANGULAR & GAUSSIAN filters, 0.10 noise
+    6. random modulation, known FIR filter, 0.10 noise
+    7. 32QAM, known fir filter, random noise
+    8. random modulation, known fir filter, random noise
