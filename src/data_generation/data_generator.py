@@ -450,10 +450,10 @@ if __name__ == "__main__":
         known_filter=None,
         sps=None,
         window_type=None,
-        noise_level=0.10,
+        noise_level=None,
         plot=False,
         store=True,
         verbose=False,
         write_mode='w',
-        filepath="src/data/dataset_6c.h5",
+        filepath="src/data/dataset_8c.h5",
     )
